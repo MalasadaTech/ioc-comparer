@@ -1,0 +1,124 @@
+{
+    "movtime76.shop": {
+        "ips": [],
+        "rdap": {
+            "status": [
+                "client transfer prohibited"
+            ],
+            "creation_date": "2025-03-13T11:50:55.0Z",
+            "expiration_date": "2026-03-13T23:59:59.0Z",
+            "registrar": "PDR Ltd. d/b/a PublicDomainRegistry.com",
+            "name_servers": [
+                "ns1.domain-seizure-001.com",
+                "ns2.domain-seizure-001.com"
+            ]
+        },
+        "ssl_certs": [
+            {
+                "id": 17149853966,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R10",
+                "common_name": "movtime76.shop",
+                "not_before": "2025-03-13T11:03:02",
+                "not_after": "2025-06-11T11:03:01"
+            },
+            {
+                "id": 17149814207,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R10",
+                "common_name": "movtime76.shop",
+                "not_before": "2025-03-13T11:03:02",
+                "not_after": "2025-06-11T11:03:01"
+            },
+            {
+                "id": 17072146083,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "portal.movtime76.shop",
+                "not_before": "2025-02-05T18:53:56",
+                "not_after": "2025-05-06T18:53:55"
+            },
+            {
+                "id": 16560569551,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "portal.movtime76.shop",
+                "not_before": "2025-02-05T18:53:56",
+                "not_after": "2025-05-06T18:53:55"
+            },
+            {
+                "id": 17072146796,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "store.movtime76.shop",
+                "not_before": "2025-02-05T18:53:54",
+                "not_after": "2025-05-06T18:53:53"
+            },
+            {
+                "id": 16603173700,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "store.movtime76.shop",
+                "not_before": "2025-02-05T18:53:54",
+                "not_after": "2025-05-06T18:53:53"
+            },
+            {
+                "id": 16551854541,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "api.movtime76.shop",
+                "not_before": "2025-02-05T18:50:32",
+                "not_after": "2025-05-06T18:50:31"
+            },
+            {
+                "id": 16551846062,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "api.movtime76.shop",
+                "not_before": "2025-02-05T18:50:32",
+                "not_after": "2025-05-06T18:50:31"
+            }
+        ]
+    },
+    "glitterygadgets.shop": {
+        "ips": [],
+        "rdap": {
+            "status": [
+                "client hold",
+                "client renew prohibited",
+                "client transfer prohibited",
+                "client update prohibited",
+                "client delete prohibited"
+            ],
+            "creation_date": "2025-03-14T12:24:12.0Z",
+            "expiration_date": "2026-03-14T23:59:59.0Z",
+            "registrar": "PDR Ltd. d/b/a PublicDomainRegistry.com",
+            "name_servers": [
+                "ns1.suspended-domain.com",
+                "ns2.suspended-domain.com"
+            ]
+        },
+        "ssl_certs": [
+            {
+                "id": 17166594033,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R10",
+                "common_name": "glitterygadgets.shop",
+                "not_before": "2025-03-14T11:44:32",
+                "not_after": "2025-06-12T11:44:31"
+            },
+            {
+                "id": 17190719233,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R10",
+                "common_name": "glitterygadgets.shop",
+                "not_before": "2025-03-14T11:44:32",
+                "not_after": "2025-06-12T11:44:31"
+            },
+            {
+                "id": 16145390282,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "ftp.glitterygadgets.shop",
+                "not_before": "2025-01-11T01:47:50",
+                "not_after": "2025-04-11T01:47:49"
+            },
+            {
+                "id": 16145385528,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "ftp.glitterygadgets.shop",
+                "not_before": "2025-01-11T01:47:50",
+                "not_after": "2025-04-11T01:47:49"
+            }
+        ]
+    }
+}
