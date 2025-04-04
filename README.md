@@ -142,5 +142,7 @@ Differences:
 - Provide a reverse lookup on IP.
 - Create a method to take a CSV with multiple IOCs as an input.
 - Configure it to also allow just one IOC input.
+- Add a feature to analyze an existing `domains.json` file.
+- Add a feature to save the comparison analysis to a unique `analysis.txt` file.
 
 
