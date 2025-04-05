@@ -308,6 +308,26 @@ def compare_domains(data, domain1, domain2):
         differences.append(f"Only {domain2} has SSL certificates")
     else:
         similarities.append("Neither domain has SSL certificates")
+    
+    # Update: 20250405 - Add a feature to save the comparison analysis to a unique analysis.txt file.
+    # Format: "analysis-{timestamp}.txt"
+    analysis_filename = f"output/analysis-{datetime.now().strftime('%Y%m%d%H%M%S')}.txt"
+    with open(analysis_filename, "w") as f:
+        f.write(f"Comparison analysis for {domain1} and {domain2}\n")
+        f.write("=" * 50 + "\n")
+        f.write(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write("=" * 50 + "\n\n")
+        f.write(f"Domain 1: {domain1}\n")
+        f.write(f"Domain 2: {domain2}\n\n")
+        f.write("Similarities and Differences:\n")
+        f.write("=" * 50 + "\n")
+        f.write("Similarities:\n")
+        for sim in similarities:
+            f.write(f"- {sim}\n")
+        f.write("\nDifferences:\n")
+        for diff in differences:
+            f.write(f"- {diff}\n")
+    print(f"Comparison analysis saved to {analysis_filename}")
 
     # Print similarities and differences
     print("\nSimilarities:")

@@ -4,3 +4,4 @@
 
 2025 APR 05:
 - Format the nameservers to lowercase, and in alphabetical order for correct matching.
+- Add a feature to save the comparison analysis to a unique analysis.txt file.
