@@ -101,24 +101,104 @@ def get_rdap_data(domain, tld_to_rdap):
         expiration_date = next((event['eventDate'] for event in events if event['eventAction'] == 'expiration'), None)
         entities = data.get('entities', [])
         registrar_entity = next((entity for entity in entities if 'registrar' in entity.get('roles', [])), None)
+        registrant_entity = next((entity for entity in entities if 'registrant' in entity.get('roles', [])), None)
+        reseller_entity = next((entity for entity in entities if 'reseller' in entity.get('roles', [])), None)
+        sponsor_entity = next((entity for entity in entities if 'sponsor' in entity.get('roles', [])), None)
+        proxy_entity = next((entity for entity in entities if 'proxy' in entity.get('roles', [])), None)
+
+        # Update: 20250405 - Extract registrar, registrant, reseller, sponsor, and proxy information
+        # Extract registrar information
         registrar = None
         if registrar_entity and 'vcardArray' in registrar_entity:
-            vcard = registrar_entity['vcardArray'][1]
-            for item in vcard:
-                if item[0] == 'fn':
-                    registrar = item[3]
-                    break
+            vcard = registrar_entity['vcardArray']
+            if len(vcard) > 1 and isinstance(vcard[1], list):
+                for item in vcard[1]:
+                    if isinstance(item, list) and len(item) > 3 and item[0] == 'fn':
+                        registrar = item[3]
+                        break
+        if registrar:
+            registrar = f"{registrar} ({registrar_entity.get('handle', 'none')})"
+        else:
+            registrar = "Unknown"
+        # example: "MarkMonitor Inc. (MMR-88)"
+
+        # Extract registrant information
+        registrant = None
+        for entity in entities:
+            if entity.get('roles') and 'registrant' in entity['roles']:
+                vcard = entity.get('vcardArray', [])
+                if len(vcard) > 1 and isinstance(vcard[1], list):
+                    registrant = {
+                        "handle": entity.get('handle', "none"),
+                        "name": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'fn'), "none"),
+                        "phone": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'tel'), "none"),
+                        "email": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'email'), "none"),
+                        "address": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'adr'), "none")
+                    }
+                break
+
+        if registrant:
+            registrant = f"{registrant['name']} ({registrant['handle']})\nPhone: {registrant['phone']}\nEmail: {registrant['email']}\nAddress: {registrant['address']}"
+        else:
+            registrant = "Unknown"
+
+        # Extract reseller information
+        reseller = None
+        for entity in entities:
+            if entity.get('roles') and 'reseller' in entity['roles']:
+                vcard = entity.get('vcardArray', [])
+                if len(vcard) > 1 and isinstance(vcard[1], list):
+                    reseller = {
+                        "handle": entity.get('handle', "none"),
+                        "name": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'fn'), "none"),
+                        "phone": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'tel'), "none"),
+                        "email": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'email'), "none"),
+                        "address": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'adr'), "none")
+                    }
+                break
+
+        if reseller:
+            reseller = f"{reseller['name']} ({reseller['handle']})\nPhone: {reseller['phone']}\nEmail: {reseller['email']}\nAddress: {reseller['address']}"
+        else:
+            reseller = "Unknown"
+
+        # Extract sponsor information
+        sponsor = None
+        for entity in entities:
+            if entity.get('roles') and 'sponsor' in entity['roles']:
+                vcard = entity.get('vcardArray', [])
+                if len(vcard) > 1 and isinstance(vcard[1], list):
+                    sponsor = {
+                        "handle": entity.get('handle', "none"),
+                        "name": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'fn'), "none"),
+                        "phone": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'tel'), "none"),
+                        "email": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'email'), "none"),
+                        "address": next((item[3] for item in vcard[1] if isinstance(item, list) and len(item) > 3 and item[0] == 'adr'), "none")
+                    }
+                break
+
+        if sponsor:
+            sponsor = f"{sponsor['name']} ({sponsor['handle']})\nPhone: {sponsor['phone']}\nEmail: {sponsor['email']}\nAddress: {sponsor['address']}"
+        else:
+            sponsor = "Unknown"
+
+        # Extract name servers
         name_servers = [ns['ldhName'] for ns in data.get('nameservers', [])]
         # Update: 20250405 - convert name servers to lowercase, and put it in alphabetical order
         name_servers = sorted(ns.lower() for ns in name_servers)
         
-        return {
+        # Format the RDAP data
+        rdap_data = {
             "status": status,
             "creation_date": creation_date,
             "expiration_date": expiration_date,
             "registrar": registrar,
+            "registrant": registrant,
+            "reseller": reseller,
+            "sponsor": sponsor,
             "name_servers": name_servers
         }
+        return rdap_data
     except requests.RequestException as e:
         return {"error": f"RDAP request failed: {e}"}
     except (KeyError, IndexError, TypeError) as e:
@@ -245,6 +325,39 @@ def compare_domains(data, domain1, domain2):
         similarities.append(f"Both domains have the same registrar: {registrar1}")
     else:
         differences.append(f"Registrars differ: {domain1}: {registrar1 if registrar1 else 'none'}, {domain2}: {registrar2 if registrar2 else 'none'}")
+
+    # Update: 20250405 - Compare registrant, reseller, sponsor, and proxy information
+    # Compare RDAP registrant
+    registrant1 = domain1_data.get('rdap', {}).get('registrant')
+    registrant2 = domain2_data.get('rdap', {}).get('registrant')
+    if registrant1 == registrant2 and registrant1:
+        similarities.append(f"Both domains have the same registrant: {registrant1}")
+    else:
+        differences.append(f"Registrants differ: {domain1}: {registrant1 if registrant1 else 'none'}, {domain2}: {registrant2 if registrant2 else 'none'}")
+
+    # Compare RDAP reseller
+    reseller1 = domain1_data.get('rdap', {}).get('reseller')
+    reseller2 = domain2_data.get('rdap', {}).get('reseller')
+    if reseller1 == reseller2 and reseller1:
+        similarities.append(f"Both domains have the same reseller: {reseller1}")
+    else:
+        differences.append(f"Resellers differ: {domain1}: {reseller1 if reseller1 else 'none'}, {domain2}: {reseller2 if reseller2 else 'none'}")
+
+    # Compare RDAP sponsor
+    sponsor1 = domain1_data.get('rdap', {}).get('sponsor')
+    sponsor2 = domain2_data.get('rdap', {}).get('sponsor')
+    if sponsor1 == sponsor2 and sponsor1:
+        similarities.append(f"Both domains have the same sponsor: {sponsor1}")
+    else:
+        differences.append(f"Sponsors differ: {domain1}: {sponsor1 if sponsor1 else 'none'}, {domain2}: {sponsor2 if sponsor2 else 'none'}")
+
+    # Compare RDAP proxy information
+    proxy1 = domain1_data.get('rdap', {}).get('proxy')
+    proxy2 = domain2_data.get('rdap', {}).get('proxy')
+    if proxy1 == proxy2 and proxy1:
+        similarities.append(f"Both domains have the same proxy information: {proxy1}")
+    else:
+        differences.append(f"Proxy information differs: {domain1}: {proxy1 if proxy1 else 'none'}, {domain2}: {proxy2 if proxy2 else 'none'}")
 
     # Compare RDAP name servers
     ns1 = set(domain1_data.get('rdap', {}).get('name_servers', []))

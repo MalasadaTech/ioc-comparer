@@ -135,7 +135,7 @@ Differences:
 - ~~Change the output write folder to something unique.~~
 - Modify the SSL comparison so that it compares all of the SSL certs.
 - ~~Format the nameservers to lowercase, and in alphabetical order for correct matching.~~
-- Parse additional RDAP fields that could prove useful (Registrant info).
+- ~~Parse additional RDAP fields that could prove useful (Registrant info).~~
 - Add a threat feed lookup.
 - Map findings to DTF Matrix.
 - Parse additional SSL fields that could prove useful (such alias, etc.).
@@ -144,5 +144,5 @@ Differences:
 - Configure it to also allow just one IOC input.
 - Add a feature to analyze an existing `domains.json` file.
 - ~~Add a feature to save the comparison analysis to a unique `analysis.txt` file.~~
-
+- Extract AS Name, not the AS Country.
 
