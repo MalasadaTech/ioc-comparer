@@ -109,6 +109,8 @@ def get_rdap_data(domain, tld_to_rdap):
                     registrar = item[3]
                     break
         name_servers = [ns['ldhName'] for ns in data.get('nameservers', [])]
+        # Update: 20250405 - convert name servers to lowercase, and put it in alphabetical order
+        name_servers = sorted(ns.lower() for ns in name_servers)
         
         return {
             "status": status,
