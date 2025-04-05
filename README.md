@@ -131,10 +131,10 @@ Differences:
 ## Roadmap
 
 - Enhanced SSL Filtering: Add options for filtering SSL certificates based on specific criteria.
-- Change the filename from `domains.json` to something unique.
-- Change the output write folder to something unique.
+~~- Change the filename from `domains.json` to something unique.~~
+~~- Change the output write folder to something unique.~~
 - Modify the SSL comparison so that it compares all of the SSL certs.
-- Format the nameservers to lowercase, and in alphabetical order for correct matching.
+~~- Format the nameservers to lowercase, and in alphabetical order for correct matching.~~
 - Parse additional RDAP fields that could prove useful (Registrant info).
 - Add a threat feed lookup.
 - Map findings to DTF Matrix.
