@@ -1,0 +1,46 @@
+{
+    "gededewe.shop": {
+        "ips": [
+            {
+                "address": "185.33.85.49",
+                "asn_number": "202015",
+                "asn_name": "BG"
+            }
+        ],
+        "rdap": {
+            "error": "RDAP request failed: 429 Client Error: Too Many Requests for url: https://rdap.gmoregistry.net/rdap/domain/gededewe.shop"
+        },
+        "ssl_certs": [
+            {
+                "id": 17623104314,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R10",
+                "common_name": "gededewe.shop",
+                "not_before": "2025-04-04T10:04:24",
+                "not_after": "2025-07-03T10:04:23"
+            }
+        ]
+    },
+    "covaticonstructioncorp.shop": {
+        "ips": [],
+        "rdap": {
+            "status": [
+                "client hold",
+                "client renew prohibited",
+                "client transfer prohibited",
+                "client update prohibited",
+                "client delete prohibited",
+                "add period"
+            ],
+            "creation_date": "2025-04-03T09:04:17.0Z",
+            "expiration_date": "2026-04-03T23:59:59.0Z",
+            "registrar": "PDR Ltd. d/b/a PublicDomainRegistry.com",
+            "name_servers": [
+                "ns1.suspended-domain.com",
+                "ns2.suspended-domain.com"
+            ]
+        },
+        "ssl_certs": {
+            "error": "429 Client Error: Too Many Requests for url: https://crt.sh/?q=covaticonstructioncorp.shop&output=json"
+        }
+    }
+}

@@ -4,6 +4,7 @@ import dns.resolver
 import ipaddress
 import requests
 from datetime import datetime, timedelta
+import time
 
 # Function to resolve IP addresses (A and AAAA records)
 def get_ips(domain):
@@ -351,11 +352,16 @@ if __name__ == "__main__":
             "rdap": rdap_data,
             "ssl_certs": ssl_certs
         }
+        
+        # Sleep to avoid rate limiting
+        time.sleep(1)
     
     # Save to JSON file
-    with open("domains.json", "w") as f:
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    output_filename = f"output/domains-{timestamp}.json"
+    with open(output_filename, "w") as f:
         json.dump(data, f, indent=4)
-    print("Data saved to domains.json")
+    print(f"Data saved to {output_filename}")
     
     # Compare the domains
     compare_domains(data, domain1, domain2)
