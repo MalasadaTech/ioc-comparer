@@ -1,0 +1,75 @@
+{
+    "lkcharles.com": {
+        "ips": [
+            {
+                "address": "31.172.79.130",
+                "asn_number": "62904",
+                "asn_name": "US"
+            }
+        ],
+        "rdap": {
+            "status": [
+                "client transfer prohibited"
+            ],
+            "creation_date": "2025-03-27T08:31:38Z",
+            "expiration_date": "2026-03-27T08:31:38Z",
+            "registrar": "PDR Ltd. d/b/a PublicDomainRegistry.com",
+            "name_servers": [
+                "NS1.DNS-PARKING.COM",
+                "NS2.DNS-PARKING.COM"
+            ]
+        },
+        "ssl_certs": [
+            {
+                "id": 17438220675,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "lkcharles.com",
+                "not_before": "2025-03-27T07:53:01",
+                "not_after": "2025-06-25T07:53:00"
+            },
+            {
+                "id": 17438227014,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+                "common_name": "lkcharles.com",
+                "not_before": "2025-03-27T07:53:01",
+                "not_after": "2025-06-25T07:53:00"
+            },
+            {
+                "id": 17437886886,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R10",
+                "common_name": "lkcharles.com",
+                "not_before": "2025-03-27T07:34:37",
+                "not_after": "2025-06-25T07:34:36"
+            },
+            {
+                "id": 17437887927,
+                "issuer_name": "C=US, O=Let's Encrypt, CN=R10",
+                "common_name": "lkcharles.com",
+                "not_before": "2025-03-27T07:34:37",
+                "not_after": "2025-06-25T07:34:36"
+            },
+            {
+                "id": 13225047689,
+                "issuer_name": "C=US, ST=Arizona, L=Scottsdale, O=\"GoDaddy.com, Inc.\", OU=http://certs.godaddy.com/repository/, CN=Go Daddy Secure Certificate Authority - G2",
+                "common_name": "lkcharles.com",
+                "not_before": "2024-05-29T21:03:50",
+                "not_after": "2025-05-29T21:03:50"
+            }
+        ]
+    },
+    "iplantit.com": {
+        "ips": [],
+        "rdap": {
+            "status": [
+                "active"
+            ],
+            "creation_date": "2025-03-27T10:10:50Z",
+            "expiration_date": "2026-03-27T10:10:50Z",
+            "registrar": "Global Domain Group LLC",
+            "name_servers": []
+        },
+        "ssl_certs": {
+            "error": "429 Client Error: Too Many Requests for url: https://crt.sh/?q=iplantit.com&output=json"
+        }
+    }
+}

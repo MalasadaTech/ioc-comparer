@@ -1,0 +1,2 @@
+- Updated the filename from `domains.json` to a unique name to avoid conflicts.
+- Modified the output write folder to ensure it uses a unique path for better organization.
