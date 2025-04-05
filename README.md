@@ -130,7 +130,9 @@ Differences:
 
 ## Roadmap
 
-- Enhanced SSL Filtering: Add options for filtering SSL certificates based on specific criteria.
+- Catch 4XX/5XX responses for SSL and registrant lookups.
+- Catch error when comparing SSL when one SSL cert array is empty.
+- Enhanced SSL: Capture SANs and fingerprint.
 - ~~Change the filename from `domains.json` to something unique.~~
 - ~~Change the output write folder to something unique.~~
 - Modify the SSL comparison so that it compares all of the SSL certs.
