@@ -448,14 +448,19 @@ def compare_domains(data, domain1, domain2):
     print("\n" + "=" * 50 + "\n")
     print(analysis_content)
 
+# Create a def to re-fang the domain by stripping any [ or ] characters
+# For example: example[.]com -> example.com
+def re_fang_domain(domain):
+    return domain.replace("[", "").replace("]", "")
+
 # Main script
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python script.py domain1 domain2")
+        print("Usage: python ioc_comparer.py domain1 domain2")
         sys.exit(1)
     
-    domain1 = sys.argv[1]
-    domain2 = sys.argv[2]
+    domain1 = re_fang_domain(sys.argv[1])
+    domain2 = re_fang_domain(sys.argv[2])
     
     # Fetch RDAP bootstrap data once
     tld_to_rdap = get_rdap_bootstrap()

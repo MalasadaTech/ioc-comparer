@@ -10,3 +10,4 @@
 - Created the .gitignore and added the output folder.
 - Replaced the deprecated datetime.datetime.utcnow() method.
 - Changed the output to read the analysis text file output so that it's cleaner.
+- Enabled defanged IOCs as inputs.
