@@ -301,7 +301,7 @@ def compare_domains(data, domain1, domain2):
     if shared_ips:
         # Check if the value is none or Unknown
         if 'none' in shared_ips or 'Unknown' in shared_ips:
-            low_value_similarities.append(f"Low-value similarity: {', '.join(shared_ips)}")
+            low_value_similarities.append(f"Low-value similarity: IP: {', '.join(shared_ips)}")
         else:
             similarities.append(f"P0201 - IP: {', '.join(shared_ips)}")
     else:
@@ -314,7 +314,7 @@ def compare_domains(data, domain1, domain2):
     if shared_asns:
         # Check if the value is none or Unknown
         if 'none' in shared_asns or 'Unknown' in shared_asns:
-            low_value_similarities.append(f"Low-value similarity: {', '.join(shared_asns)}")
+            low_value_similarities.append(f"Low-value similarity: AS: {', '.join(shared_asns)}")
         else:
             similarities.append(f"P0203 - AS: {', '.join(shared_asns)}")
     else:
@@ -325,10 +325,7 @@ def compare_domains(data, domain1, domain2):
     rdap_status2 = domain2_data.get('rdap', {}).get('status', [])
     if rdap_status1 == rdap_status2 and rdap_status1:
         # Check if the value is none or Unknown
-        if 'none' in rdap_status1 or 'Unknown' in rdap_status1:
-            low_value_similarities.append(f"Low-value similarity: {', '.join(rdap_status1)}")
-        else:
-            similarities.append(f"Both domains have the same RDAP Status: {', '.join(rdap_status1)}")
+        low_value_similarities.append(f"Low-value similarity: RDAP Status: {', '.join(rdap_status1)}")
     else:
         differences.append(f"RDAP statuses differ: {domain1}: {', '.join(rdap_status1) if rdap_status1 else 'none'}, {domain2}: {', '.join(rdap_status2) if rdap_status2 else 'none'}")
 
@@ -338,7 +335,7 @@ def compare_domains(data, domain1, domain2):
     if registrar1 == registrar2 and registrar1:
         # Check if the value is none or Unknown
         if 'none' in registrar1 or 'Unknown' in registrar1:
-            low_value_similarities.append(f"Low-value similarity: {registrar1}")
+            low_value_similarities.append(f"Low-value similarity: Registrar: {registrar1}")
         else:
             similarities.append(f"P0101.001 - Registration: Registrar: {registrar1}")
     else:
@@ -351,7 +348,7 @@ def compare_domains(data, domain1, domain2):
     if registrant1 == registrant2 and registrant1:
         # Check if the value is none or Unknown
         if 'none' in registrant1 or 'Unknown' in registrant1:
-            low_value_similarities.append(f"Low-value similarity: {registrant1}")
+            low_value_similarities.append(f"Low-value similarity: Registrant: {registrant1}")
         else:
             similarities.append(f"P0101.003 - Registration: Registrant: {registrant1}")
     else:
@@ -363,7 +360,7 @@ def compare_domains(data, domain1, domain2):
     if reseller1 == reseller2 and reseller1:
         # Check if the value is none or Unknown
         if 'none' in reseller1 or 'Unknown' in reseller1:
-            low_value_similarities.append(f"Low-value similarity: {reseller1}")
+            low_value_similarities.append(f"Low-value similarity: reseller: {reseller1}")
         else:
             similarities.append(f"Both domains have the same reseller: {reseller1}")
     else:
@@ -375,7 +372,7 @@ def compare_domains(data, domain1, domain2):
     if sponsor1 == sponsor2 and sponsor1:
         # Check if the value is none or Unknown
         if 'none' in sponsor1 or 'Unknown' in sponsor1:
-            low_value_similarities.append(f"Low-value similarity: {sponsor1}")
+            low_value_similarities.append(f"Low-value similarity: sponsor: {sponsor1}")
         else:
             similarities.append(f"Both domains have the same sponsor: {sponsor1}")
     else:
@@ -387,7 +384,7 @@ def compare_domains(data, domain1, domain2):
     if proxy1 == proxy2 and proxy1:
         # Check if the value is none or Unknown
         if 'none' in proxy1 or 'Unknown' in proxy1:
-            low_value_similarities.append(f"Low-value similarity: {proxy1}")
+            low_value_similarities.append(f"Low-value similarity: proxy information: {proxy1}")
         else:
             similarities.append(f"Both domains have the same proxy information: {proxy1}")
     else:
@@ -400,11 +397,22 @@ def compare_domains(data, domain1, domain2):
     if shared_ns:
         # Check if the value is none or Unknown
         if 'none' in shared_ns or 'Unknown' in shared_ns:
-            low_value_similarities.append(f"Low-value similarity: {', '.join(shared_ns)}")
+            low_value_similarities.append(f"Low-value similarity: Registration: Name Server: {', '.join(shared_ns)}")
         else:
             similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(shared_ns)}")
     if ns1 - shared_ns or ns2 - shared_ns:
         differences.append(f"Unique name servers: {domain1}: {', '.join(ns1 - shared_ns) if ns1 - shared_ns else 'none'}, {domain2}: {', '.join(ns2 - shared_ns) if ns2 - shared_ns else 'none'}")
+
+    # Compare RDAP name server domains
+    ns_domain1 = set(tuple(ns.split('.')[-2:]) for ns in ns1 if ns and 'Unknown' not in ns)
+    ns_domain2 = set(tuple(ns.split('.')[-2:]) for ns in ns2 if ns and 'Unknown' not in ns)
+    shared_ns_domain = ns_domain1 & ns_domain2
+    if shared_ns_domain:
+        # Check if the value is none or Unknown
+        if 'none' in shared_ns_domain or 'Unknown' in shared_ns_domain:
+            low_value_similarities.append(f"Low-value similarity: Name Server Domain: {', '.join('.'.join(ns) for ns in shared_ns_domain)}")
+        else:
+            similarities.append(f"P0101.011 - Registration: Name Server Domain: {', '.join('.'.join(ns) for ns in shared_ns_domain)}")
 
     # Compare RDAP creation dates
     creation_date1 = parse_date(domain1_data.get('rdap', {}).get('creation_date'))
