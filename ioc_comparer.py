@@ -442,13 +442,11 @@ def compare_domains(data, domain1, domain2):
             f.write(f"- {diff}\n")
     print(f"Comparison analysis saved to {analysis_filename}")
 
-    # Print similarities and differences
-    print("\nSimilarities:")
-    for sim in similarities:
-        print(f"- {sim}")
-    print("\nDifferences:")
-    for diff in differences:
-        print(f"- {diff}")
+    # Read the analysis from analysis_filename
+    with open(analysis_filename, "r") as f:
+        analysis_content = f.read()
+    print("\n" + "=" * 50 + "\n")
+    print(analysis_content)
 
 # Main script
 if __name__ == "__main__":
