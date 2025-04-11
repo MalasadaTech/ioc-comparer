@@ -12,3 +12,4 @@
 - Changed the output to read the analysis text file output so that it's cleaner.
 - Enabled defanged IOCs as inputs.
 - Mapped to DTF (https://github.com/MalasadaTech/defenders-threatmesh-framework)
+- Modified code to add any "none" or "Unknown" matches to a Low-value similarities array.

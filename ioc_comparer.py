@@ -250,7 +250,7 @@ def get_ssl_certs(domain):
                         "not_after": cert.get("not_after")
                     })
             except ValueError as e:
-                print(f"Error parsing dates for cert {cert.get('id', 'unknown')}: {e}")
+                print(f"Error parsing dates for cert {cert.get('id', 'Unknown')}: {e}")
                 continue  # Skip certificates with invalid dates
 
         return parsed_certs
@@ -287,6 +287,8 @@ def parse_date(date_str):
 # Function to compare the two domains
 def compare_domains(data, domain1, domain2):
     similarities = []
+    # Create a low_value_similarities list to store low-value similarities such as none or Unknown
+    low_value_similarities = []
     differences = []
 
     domain1_data = data.get(domain1, {})
@@ -297,7 +299,11 @@ def compare_domains(data, domain1, domain2):
     ips2 = [ip['address'] for ip in domain2_data.get('ips', [])]
     shared_ips = set(ips1) & set(ips2)
     if shared_ips:
-        similarities.append(f"P0201 - IP: {', '.join(shared_ips)}")
+        # Check if the value is none or Unknown
+        if 'none' in shared_ips or 'Unknown' in shared_ips:
+            low_value_similarities.append(f"Low-value similarity: {', '.join(shared_ips)}")
+        else:
+            similarities.append(f"P0201 - IP: {', '.join(shared_ips)}")
     else:
         differences.append(f"No shared IPs. {domain1} has {', '.join(ips1) if ips1 else 'none'}, {domain2} has {', '.join(ips2) if ips2 else 'none'}")
 
@@ -306,7 +312,11 @@ def compare_domains(data, domain1, domain2):
     asns2 = set(ip['asn_number'] for ip in domain2_data.get('ips', []) if 'asn_number' in ip)
     shared_asns = asns1 & asns2
     if shared_asns:
-        similarities.append(f"P0203 - AS: {', '.join(shared_asns)}")
+        # Check if the value is none or Unknown
+        if 'none' in shared_asns or 'Unknown' in shared_asns:
+            low_value_similarities.append(f"Low-value similarity: {', '.join(shared_asns)}")
+        else:
+            similarities.append(f"P0203 - AS: {', '.join(shared_asns)}")
     else:
         differences.append(f"No shared ASNs. {domain1} has ASNs {', '.join(asns1) if asns1 else 'none'}, {domain2} has ASNs {', '.join(asns2) if asns2 else 'none'}")
 
@@ -314,7 +324,11 @@ def compare_domains(data, domain1, domain2):
     rdap_status1 = domain1_data.get('rdap', {}).get('status', [])
     rdap_status2 = domain2_data.get('rdap', {}).get('status', [])
     if rdap_status1 == rdap_status2 and rdap_status1:
-        similarities.append(f"Both domains have the same RDAP status: {', '.join(rdap_status1)}")
+        # Check if the value is none or Unknown
+        if 'none' in rdap_status1 or 'Unknown' in rdap_status1:
+            low_value_similarities.append(f"Low-value similarity: {', '.join(rdap_status1)}")
+        else:
+            similarities.append(f"Both domains have the same RDAP Status: {', '.join(rdap_status1)}")
     else:
         differences.append(f"RDAP statuses differ: {domain1}: {', '.join(rdap_status1) if rdap_status1 else 'none'}, {domain2}: {', '.join(rdap_status2) if rdap_status2 else 'none'}")
 
@@ -322,7 +336,11 @@ def compare_domains(data, domain1, domain2):
     registrar1 = domain1_data.get('rdap', {}).get('registrar')
     registrar2 = domain2_data.get('rdap', {}).get('registrar')
     if registrar1 == registrar2 and registrar1:
-        similarities.append(f"P0101.001 - Registration: Registrar: {registrar1}")
+        # Check if the value is none or Unknown
+        if 'none' in registrar1 or 'Unknown' in registrar1:
+            low_value_similarities.append(f"Low-value similarity: {registrar1}")
+        else:
+            similarities.append(f"P0101.001 - Registration: Registrar: {registrar1}")
     else:
         differences.append(f"Registrars differ: {domain1}: {registrar1 if registrar1 else 'none'}, {domain2}: {registrar2 if registrar2 else 'none'}")
 
@@ -331,7 +349,11 @@ def compare_domains(data, domain1, domain2):
     registrant1 = domain1_data.get('rdap', {}).get('registrant')
     registrant2 = domain2_data.get('rdap', {}).get('registrant')
     if registrant1 == registrant2 and registrant1:
-        similarities.append(f"P0101.003 - Registration: Registrant: {registrant1}")
+        # Check if the value is none or Unknown
+        if 'none' in registrant1 or 'Unknown' in registrant1:
+            low_value_similarities.append(f"Low-value similarity: {registrant1}")
+        else:
+            similarities.append(f"P0101.003 - Registration: Registrant: {registrant1}")
     else:
         differences.append(f"Registrants differ: {domain1}: {registrant1 if registrant1 else 'none'}, {domain2}: {registrant2 if registrant2 else 'none'}")
 
@@ -339,7 +361,11 @@ def compare_domains(data, domain1, domain2):
     reseller1 = domain1_data.get('rdap', {}).get('reseller')
     reseller2 = domain2_data.get('rdap', {}).get('reseller')
     if reseller1 == reseller2 and reseller1:
-        similarities.append(f"Both domains have the same reseller: {reseller1}")
+        # Check if the value is none or Unknown
+        if 'none' in reseller1 or 'Unknown' in reseller1:
+            low_value_similarities.append(f"Low-value similarity: {reseller1}")
+        else:
+            similarities.append(f"Both domains have the same reseller: {reseller1}")
     else:
         differences.append(f"Resellers differ: {domain1}: {reseller1 if reseller1 else 'none'}, {domain2}: {reseller2 if reseller2 else 'none'}")
 
@@ -347,7 +373,11 @@ def compare_domains(data, domain1, domain2):
     sponsor1 = domain1_data.get('rdap', {}).get('sponsor')
     sponsor2 = domain2_data.get('rdap', {}).get('sponsor')
     if sponsor1 == sponsor2 and sponsor1:
-        similarities.append(f"Both domains have the same sponsor: {sponsor1}")
+        # Check if the value is none or Unknown
+        if 'none' in sponsor1 or 'Unknown' in sponsor1:
+            low_value_similarities.append(f"Low-value similarity: {sponsor1}")
+        else:
+            similarities.append(f"Both domains have the same sponsor: {sponsor1}")
     else:
         differences.append(f"Sponsors differ: {domain1}: {sponsor1 if sponsor1 else 'none'}, {domain2}: {sponsor2 if sponsor2 else 'none'}")
 
@@ -355,7 +385,11 @@ def compare_domains(data, domain1, domain2):
     proxy1 = domain1_data.get('rdap', {}).get('proxy')
     proxy2 = domain2_data.get('rdap', {}).get('proxy')
     if proxy1 == proxy2 and proxy1:
-        similarities.append(f"Both domains have the same proxy information: {proxy1}")
+        # Check if the value is none or Unknown
+        if 'none' in proxy1 or 'Unknown' in proxy1:
+            low_value_similarities.append(f"Low-value similarity: {proxy1}")
+        else:
+            similarities.append(f"Both domains have the same proxy information: {proxy1}")
     else:
         differences.append(f"Proxy information differs: {domain1}: {proxy1 if proxy1 else 'none'}, {domain2}: {proxy2 if proxy2 else 'none'}")
 
@@ -364,7 +398,11 @@ def compare_domains(data, domain1, domain2):
     ns2 = set(domain2_data.get('rdap', {}).get('name_servers', []))
     shared_ns = ns1 & ns2
     if shared_ns:
-        similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(shared_ns)}")
+        # Check if the value is none or Unknown
+        if 'none' in shared_ns or 'Unknown' in shared_ns:
+            low_value_similarities.append(f"Low-value similarity: {', '.join(shared_ns)}")
+        else:
+            similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(shared_ns)}")
     if ns1 - shared_ns or ns2 - shared_ns:
         differences.append(f"Unique name servers: {domain1}: {', '.join(ns1 - shared_ns) if ns1 - shared_ns else 'none'}, {domain2}: {', '.join(ns2 - shared_ns) if ns2 - shared_ns else 'none'}")
 
@@ -437,6 +475,9 @@ def compare_domains(data, domain1, domain2):
         f.write("Similarities:\n")
         for sim in similarities:
             f.write(f"- {sim}\n")
+        f.write("\nLow-value similarities:\n")
+        for low_sim in low_value_similarities:
+            f.write(f"- {low_sim}\n")
         f.write("\nDifferences:\n")
         for diff in differences:
             f.write(f"- {diff}\n")
