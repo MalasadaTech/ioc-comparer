@@ -3,7 +3,7 @@ import json
 import dns.resolver
 import ipaddress
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 
 # Function to resolve IP addresses (A and AAAA records)
@@ -204,13 +204,13 @@ def get_rdap_data(domain, tld_to_rdap):
     except (KeyError, IndexError, TypeError) as e:
         return {"error": f"Error parsing RDAP response: {e}"}
 
-# Function to get SSL certificates from crt.sh (all certificates, not filtered for active)
+# Function to get SSL certificates from crt.sh
 def get_ssl_certs(domain):
     """
     Retrieve active SSL certificate information for a given domain from crt.sh.
     
     Args:
-        domain (str): The domain name to query (e.g., "eiesystems.com").
+        domain (str): The domain name to query (e.g., "example.com").
     
     Returns:
         list: A list of dictionaries containing details of active certificates, or an error message if the request fails.
@@ -224,7 +224,7 @@ def get_ssl_certs(domain):
             return []  # No certificates found
 
         # Get current UTC time for comparison
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         parsed_certs = []
 
         for cert in certs:
@@ -236,9 +236,9 @@ def get_ssl_certs(domain):
                 not_before_str = not_before_str.replace(" ", "T")
                 not_after_str = not_after_str.replace(" ", "T")
 
-                # Parse dates into datetime objects
-                not_before = datetime.fromisoformat(not_before_str)
-                not_after = datetime.fromisoformat(not_after_str)
+                # Parse dates into datetime objects and make them timezone-aware
+                not_before = datetime.fromisoformat(not_before_str).replace(tzinfo=timezone.utc)
+                not_after = datetime.fromisoformat(not_after_str).replace(tzinfo=timezone.utc)
 
                 # Check if the certificate is active
                 if not_before <= current_time <= not_after:
