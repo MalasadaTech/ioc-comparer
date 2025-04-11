@@ -297,7 +297,7 @@ def compare_domains(data, domain1, domain2):
     ips2 = [ip['address'] for ip in domain2_data.get('ips', [])]
     shared_ips = set(ips1) & set(ips2)
     if shared_ips:
-        similarities.append(f"Shared IPs: {', '.join(shared_ips)}")
+        similarities.append(f"P0201 - IP: {', '.join(shared_ips)}")
     else:
         differences.append(f"No shared IPs. {domain1} has {', '.join(ips1) if ips1 else 'none'}, {domain2} has {', '.join(ips2) if ips2 else 'none'}")
 
@@ -306,7 +306,7 @@ def compare_domains(data, domain1, domain2):
     asns2 = set(ip['asn_number'] for ip in domain2_data.get('ips', []) if 'asn_number' in ip)
     shared_asns = asns1 & asns2
     if shared_asns:
-        similarities.append(f"Shared ASNs: {', '.join(shared_asns)}")
+        similarities.append(f"P0203 - AS: {', '.join(shared_asns)}")
     else:
         differences.append(f"No shared ASNs. {domain1} has ASNs {', '.join(asns1) if asns1 else 'none'}, {domain2} has ASNs {', '.join(asns2) if asns2 else 'none'}")
 
@@ -322,7 +322,7 @@ def compare_domains(data, domain1, domain2):
     registrar1 = domain1_data.get('rdap', {}).get('registrar')
     registrar2 = domain2_data.get('rdap', {}).get('registrar')
     if registrar1 == registrar2 and registrar1:
-        similarities.append(f"Both domains have the same registrar: {registrar1}")
+        similarities.append(f"P0101.001 - Registration: Registrar: {registrar1}")
     else:
         differences.append(f"Registrars differ: {domain1}: {registrar1 if registrar1 else 'none'}, {domain2}: {registrar2 if registrar2 else 'none'}")
 
@@ -331,7 +331,7 @@ def compare_domains(data, domain1, domain2):
     registrant1 = domain1_data.get('rdap', {}).get('registrant')
     registrant2 = domain2_data.get('rdap', {}).get('registrant')
     if registrant1 == registrant2 and registrant1:
-        similarities.append(f"Both domains have the same registrant: {registrant1}")
+        similarities.append(f"P0101.003 - Registration: Registrant: {registrant1}")
     else:
         differences.append(f"Registrants differ: {domain1}: {registrant1 if registrant1 else 'none'}, {domain2}: {registrant2 if registrant2 else 'none'}")
 
@@ -364,7 +364,7 @@ def compare_domains(data, domain1, domain2):
     ns2 = set(domain2_data.get('rdap', {}).get('name_servers', []))
     shared_ns = ns1 & ns2
     if shared_ns:
-        similarities.append(f"Shared name servers: {', '.join(shared_ns)}")
+        similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(shared_ns)}")
     if ns1 - shared_ns or ns2 - shared_ns:
         differences.append(f"Unique name servers: {domain1}: {', '.join(ns1 - shared_ns) if ns1 - shared_ns else 'none'}, {domain2}: {', '.join(ns2 - shared_ns) if ns2 - shared_ns else 'none'}")
 
@@ -374,7 +374,7 @@ def compare_domains(data, domain1, domain2):
     if creation_date1 and creation_date2:
         diff = abs(creation_date1 - creation_date2)
         if diff <= timedelta(days=7):
-            similarities.append(f"Creation dates are within 7 days: {creation_date1} and {creation_date2}")
+            similarities.append(f"P0101.002 - Registration: Registration date (7 days): {creation_date1} and {creation_date2}")
         else:
             differences.append(f"Creation dates differ by more than 7 days: {creation_date1} vs {creation_date2}")
     else:
@@ -400,7 +400,7 @@ def compare_domains(data, domain1, domain2):
         org1 = get_issuing_org(cert1.get('issuer_name'))
         org2 = get_issuing_org(cert2.get('issuer_name'))
         if org1 == org2 and org1:
-            similarities.append(f"SSL cert issuing organizations are the same: {org1}")
+            similarities.append(f"P0301 - Issuer Organization: {org1}")
         else:
             differences.append(f"SSL cert issuing organizations differ: {org1 if org1 else 'none'} vs {org2 if org2 else 'none'}")
 
