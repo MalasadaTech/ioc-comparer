@@ -48,8 +48,11 @@ def get_asn(ip):
         asn_answers = dns.resolver.resolve(f"AS{asn_number}.asn.cymru.com", 'TXT')
         asn_txt_record = asn_answers[0].to_text().strip('"')
         asn_fields = asn_txt_record.split(' | ')
-        asn_name = asn_fields[4].strip()  # Correctly assign the AS name
-        asn_country = asn_fields[1].strip()  # Correctly assign the AS country
+        asn_name = asn_fields[0].strip()
+        asn_country = asn_fields[1].strip()
+        # Remove trailing ", {asn_country}" from asn_name if it exists
+        if asn_name.endswith(f", {asn_country}"):
+            asn_name = asn_name[: -len(f", {asn_country}")]
         return asn_number, asn_name, asn_country
     except Exception as e:
         print(f"Error retrieving ASN for {ip}: {e}")
