@@ -45,13 +45,13 @@
 Run the script from the command line by providing two domain names as arguments:
 
 ```bash
-python ioc_comparer.py domain1 domain2
+python main.py domain1 domain2
 ```
 
 ### Example
 
 ```bash
-python ioc_comparer.py example.com example.org
+python main.py example.com example.org
 ```
 
 ### Output
@@ -63,13 +63,13 @@ python ioc_comparer.py example.com example.org
 Data saved to domains.json
 
 Similarities:
-- Both domains have the same RDAP status: active
-- Both domains have the same registrar: Example Registrar Inc.
-- SSL cert issuing organizations are the same: Let's Encrypt
+- P0101.001 - Registration: Registrar: Example Registrar Inc.
+- P0101.002 - Registration: Registration date (7 days): 2022-01-15T00:00:00+00:00 and 2022-01-20T00:00:00+00:00
+- P0101.010 - Registration: Name Server: ns1.example.com
+- P0201 - IP: 93.184.216.34
+- P0203 - AS: 15133
 
 Differences:
-- No shared IPs. example.com has 93.184.216.34, example.org has 198.51.100.1
-- Creation dates differ by more than 7 days: 2022-01-15T00:00:00+00:00 vs 2022-03-01T00:00:00+00:00
 - SSL cert not_before dates differ by more than 7 days: 2023-10-01T00:00:00+00:00 vs 2023-11-01T00:00:00+00:00
 ```
 
@@ -122,29 +122,14 @@ Differences:
 - Saves all data to `domains.json`.
 - Prints similarities first, followed by differences.
 
+## Notes
+
+- The previously used `ioc_comparer.py` script is now obsolete and has been renamed to `ioc_comparer.txt` for archival purposes.
+- Use `main.py` for all future operations.
+
 ## Limitations
 
 - **Rate Limits**: External services (RDAP servers, crt.sh) may impose rate limits, potentially causing failures with excessive use.
 - **Data Availability**: Some domains may lack RDAP support or SSL certificates, resulting in partial data.
 - **Time Sensitivity**: Date comparisons depend on the current UTC time when the script runs.
-
-## Roadmap
-
-- Catch 4XX/5XX responses for SSL and registrant lookups.
-- Catch error when comparing SSL when one SSL cert array is empty.
-- Enhanced SSL: Capture SANs and fingerprint.
-- ~~Change the filename from `domains.json` to something unique.~~
-- ~~Change the output write folder to something unique.~~
-- Modify the SSL comparison so that it compares all of the SSL certs.
-- ~~Format the nameservers to lowercase, and in alphabetical order for correct matching.~~
-- ~~Parse additional RDAP fields that could prove useful (Registrant info).~~
-- Add a threat feed lookup.
-- Map findings to DTF Matrix.
-- Parse additional SSL fields that could prove useful (such alias, etc.).
-- Provide a reverse lookup on IP.
-- Create a method to take a CSV with multiple IOCs as an input.
-- Configure it to also allow just one IOC input.
-- Add a feature to analyze an existing `domains.json` file.
-- ~~Add a feature to save the comparison analysis to a unique `analysis.txt` file.~~
-- Extract AS Name, not the AS Country.
 
