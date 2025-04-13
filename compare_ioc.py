@@ -9,6 +9,46 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
     low_value_similarities = []
     differences = []
 
+    # Compare RDAP registrar
+    registrar1 = data1.get('rdap', {}).get('registrar')
+    registrar2 = data2.get('rdap', {}).get('registrar')
+    if registrar1 == registrar2 and registrar1:
+        if 'none' in registrar1 or 'Unknown' in registrar1:
+            low_value_similarities.append(f"Low-value similarity: Registrar: {registrar1}")
+        else:
+            similarities.append(f"P0101.001 - Registration: Registrar: {registrar1}")
+    else:
+        differences.append(f"Registrars differ: {ioc1}: {registrar1 if registrar1 else 'none'}, {ioc2}: {registrar2 if registrar2 else 'none'}")
+
+    # Compare creation dates
+    creation_date1 = parse_date(data1.get('rdap', {}).get('creation_date'))
+    creation_date2 = parse_date(data2.get('rdap', {}).get('creation_date'))
+    creation_date_comparison = compare_creation_dates(creation_date1, creation_date2)
+    if "not comparable" in creation_date_comparison or "differ by more than 7 days" in creation_date_comparison:
+        differences.append(creation_date_comparison)
+    else:
+        similarities.append(creation_date_comparison)
+    
+    # Compare RDAP name servers
+    ns1 = set(data1.get('rdap', {}).get('name_servers', []))
+    ns2 = set(data2.get('rdap', {}).get('name_servers', []))
+    shared_ns = ns1 & ns2
+    if shared_ns:
+        if 'none' in shared_ns or 'Unknown' in shared_ns:
+            low_value_similarities.append(f"Low-value similarity: Name Server: {', '.join(shared_ns)}")
+        else:
+            similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(shared_ns)}")
+    if ns1 - shared_ns or ns2 - shared_ns:
+        differences.append(f"Unique name servers: {ioc1}: {', '.join(ns1 - shared_ns) if ns1 - shared_ns else 'none'}, {ioc2}: {', '.join(ns2 - shared_ns) if ns2 - shared_ns else 'none'}")
+
+    # Compare name server domains
+    ns_domain_comparison = compare_name_server_domains(ns1, ns2)
+    if ns_domain_comparison:
+        if "Low-value similarity" in ns_domain_comparison:
+            low_value_similarities.append(ns_domain_comparison)
+        else:
+            similarities.append(ns_domain_comparison)
+
     # Compare IPs
     ips1 = [ip['address'] for ip in data1.get('ips', [])]
     ips2 = [ip['address'] for ip in data2.get('ips', [])]
@@ -33,45 +73,6 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
     else:
         differences.append(f"No shared ASNs. {ioc1} has ASNs {', '.join(asns1) if asns1 else 'none'}, {ioc2} has ASNs {', '.join(asns2) if asns2 else 'none'}")
 
-    # Compare RDAP registrar
-    registrar1 = data1.get('rdap', {}).get('registrar')
-    registrar2 = data2.get('rdap', {}).get('registrar')
-    if registrar1 == registrar2 and registrar1:
-        if 'none' in registrar1 or 'Unknown' in registrar1:
-            low_value_similarities.append(f"Low-value similarity: Registrar: {registrar1}")
-        else:
-            similarities.append(f"P0101.001 - Registration: Registrar: {registrar1}")
-    else:
-        differences.append(f"Registrars differ: {ioc1}: {registrar1 if registrar1 else 'none'}, {ioc2}: {registrar2 if registrar2 else 'none'}")
-
-    # Compare RDAP name servers
-    ns1 = set(data1.get('rdap', {}).get('name_servers', []))
-    ns2 = set(data2.get('rdap', {}).get('name_servers', []))
-    shared_ns = ns1 & ns2
-    if shared_ns:
-        if 'none' in shared_ns or 'Unknown' in shared_ns:
-            low_value_similarities.append(f"Low-value similarity: Name Server: {', '.join(shared_ns)}")
-        else:
-            similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(shared_ns)}")
-    if ns1 - shared_ns or ns2 - shared_ns:
-        differences.append(f"Unique name servers: {ioc1}: {', '.join(ns1 - shared_ns) if ns1 - shared_ns else 'none'}, {ioc2}: {', '.join(ns2 - shared_ns) if ns2 - shared_ns else 'none'}")
-
-    # Compare name server domains
-    ns_domain_comparison = compare_name_server_domains(ns1, ns2)
-    if ns_domain_comparison:
-        if "Low-value similarity" in ns_domain_comparison:
-            low_value_similarities.append(ns_domain_comparison)
-        else:
-            similarities.append(ns_domain_comparison)
-
-    # Compare creation dates
-    creation_date1 = parse_date(data1.get('rdap', {}).get('creation_date'))
-    creation_date2 = parse_date(data2.get('rdap', {}).get('creation_date'))
-    creation_date_comparison = compare_creation_dates(creation_date1, creation_date2)
-    if "not comparable" in creation_date_comparison or "differ by more than 7 days" in creation_date_comparison:
-        differences.append(creation_date_comparison)
-    else:
-        similarities.append(creation_date_comparison)
 
     # Format comparison output
     output = f"Comparison between {ioc1} and {ioc2}:\n"
