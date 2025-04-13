@@ -63,13 +63,13 @@ python main.py example.com example.org
 Data saved to domains.json
 
 Similarities:
-- Both domains have the same RDAP status: active
-- Both domains have the same registrar: Example Registrar Inc.
-- SSL cert issuing organizations are the same: Let's Encrypt
+- P0101.001 - Registration: Registrar: Example Registrar Inc.
+- P0101.002 - Registration: Registration date (7 days): 2022-01-15T00:00:00+00:00 and 2022-01-20T00:00:00+00:00
+- P0101.010 - Registration: Name Server: ns1.example.com
+- P0201 - IP: 93.184.216.34
+- P0203 - AS: 15133
 
 Differences:
-- No shared IPs. example.com has 93.184.216.34, example.org has 198.51.100.1
-- Creation dates differ by more than 7 days: 2022-01-15T00:00:00+00:00 vs 2022-03-01T00:00:00+00:00
 - SSL cert not_before dates differ by more than 7 days: 2023-10-01T00:00:00+00:00 vs 2023-11-01T00:00:00+00:00
 ```
 
