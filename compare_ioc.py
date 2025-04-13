@@ -61,6 +61,18 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
     else:
         differences.append(f"No shared IPs. {ioc1} has {', '.join(ips1) if ips1 else 'none'}, {ioc2} has {', '.join(ips2) if ips2 else 'none'}")
 
+    # Compare AS names
+    asn_names1 = set(ip['asn_name'] for ip in data1.get('ips', []) if 'asn_name' in ip)
+    asn_names2 = set(ip['asn_name'] for ip in data2.get('ips', []) if 'asn_name' in ip)
+    shared_asn_names = asn_names1 & asn_names2
+    if shared_asn_names:
+        if 'none' in shared_asn_names or 'Unknown' in shared_asn_names:
+            low_value_similarities.append(f"Low-value similarity: ASN Name: {', '.join(shared_asn_names)}")
+        else:
+            similarities.append(f"P0203 - AS Name: {', '.join(shared_asn_names)}")
+    else:
+        differences.append(f"No shared ASN Names. {ioc1} has ASN Names {', '.join(asn_names1) if asn_names1 else 'none'}, {ioc2} has ASN Names {', '.join(asn_names2) if asn_names2 else 'none'}")
+
     # Compare ASNs
     asns1 = set(ip['asn_number'] for ip in data1.get('ips', []) if 'asn_number' in ip)
     asns2 = set(ip['asn_number'] for ip in data2.get('ips', []) if 'asn_number' in ip)
@@ -69,10 +81,21 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
         if 'none' in shared_asns or 'Unknown' in shared_asns:
             low_value_similarities.append(f"Low-value similarity: AS: {', '.join(shared_asns)}")
         else:
-            similarities.append(f"P0203 - AS: {', '.join(shared_asns)}")
+            similarities.append(f"P0203 - AS Number: {', '.join(shared_asns)}")
     else:
         differences.append(f"No shared ASNs. {ioc1} has ASNs {', '.join(asns1) if asns1 else 'none'}, {ioc2} has ASNs {', '.join(asns2) if asns2 else 'none'}")
 
+    # Compare ASN countries
+    asn_countries1 = set(ip['asn_country'] for ip in data1.get('ips', []) if 'asn_country' in ip)
+    asn_countries2 = set(ip['asn_country'] for ip in data2.get('ips', []) if 'asn_country' in ip)
+    shared_asn_countries = asn_countries1 & asn_countries2
+    if shared_asn_countries:
+        if 'none' in shared_asn_countries or 'Unknown' in shared_asn_countries:
+            low_value_similarities.append(f"Low-value similarity: ASN Country: {', '.join(shared_asn_countries)}")
+        else:
+            similarities.append(f"P0203 - AS Country: {', '.join(shared_asn_countries)}")
+    else:
+        differences.append(f"No shared ASN Countries. {ioc1} has ASN Countries {', '.join(asn_countries1) if asn_countries1 else 'none'}, {ioc2} has ASN Countries {', '.join(asn_countries2) if asn_countries2 else 'none'}")
 
     # Format comparison output
     output = f"Comparison between {ioc1} and {ioc2}:\n"

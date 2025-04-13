@@ -1,4 +1,7 @@
-import dns.resolver
+try:
+    import dns.resolver
+except ImportError:
+    raise ImportError("The 'dnspython' library is required but not installed. Install it using 'pip install dnspython'.")
 import ipaddress
 import requests
 from datetime import datetime, timezone
@@ -35,7 +38,7 @@ def reverse_ip(ip):
     return reversed_ip + '.' + zone
 
 def get_asn(ip):
-    """Get ASN number and name for an IP."""
+    """Get ASN number, name, and country for an IP."""
     query_name = reverse_ip(ip)
     try:
         answers = dns.resolver.resolve(query_name, 'TXT')
@@ -44,11 +47,16 @@ def get_asn(ip):
         asn_number = fields[0].split()[0]
         asn_answers = dns.resolver.resolve(f"AS{asn_number}.asn.cymru.com", 'TXT')
         asn_txt_record = asn_answers[0].to_text().strip('"')
-        asn_name = asn_txt_record.split(' | ')[1].strip()
-        return asn_number, asn_name
+        asn_fields = asn_txt_record.split(' | ')
+        asn_name = asn_fields[4].strip()  # Correctly assign the AS name (field 4)
+        asn_country = asn_fields[1].strip()  # Correctly assign the AS country (field 1)
+        # Remove trailing ", {asn_country}" from asn_name if it exists
+        if asn_name.endswith(f", {asn_country}"):
+            asn_name = asn_name[: -len(f", {asn_country}")]
+        return asn_number, asn_name, asn_country
     except Exception as e:
         print(f"Error retrieving ASN for {ip}: {e}")
-        return None, None
+        return None, None, None
 
 def get_rdap_bootstrap():
     """Fetch RDAP bootstrap data."""
