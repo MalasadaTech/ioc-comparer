@@ -84,7 +84,11 @@ def get_rdap_data(domain, tld_to_rdap):
         creation_date = next((e['eventDate'] for e in events if e['eventAction'] == 'registration'), None)
         expiration_date = next((e['eventDate'] for e in events if e['eventAction'] == 'expiration'), None)
         entities = data.get('entities', [])
-        registrar = next((e['vcardArray'][1][0][3] for e in entities if 'registrar' in e.get('roles', []) and 'vcardArray' in e and len(e['vcardArray']) > 1 and e['vcardArray'][1] and e['vcardArray'][1][0][0] == 'fn'), "Unknown")
+        registrar = next((
+            next((i[3] for i in e['vcardArray'][1] if i[0] == 'fn'), "Unknown")
+            for e in entities
+            if 'registrar' in e.get('roles', []) and 'vcardArray' in e and len(e['vcardArray']) > 1
+        ), "Unknown")
         registrar = f"{registrar} ({next((e.get('handle', 'none') for e in entities if 'registrar' in e.get('roles', [])), 'none')})"
         registrant = next(({
             "name": next((i[3] for i in e['vcardArray'][1] if i[0] == 'fn'), "none"),
