@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils import get_issuing_org, parse_date
 
 def compare_two_iocs(ioc1, ioc2, data1, data2):
@@ -56,6 +56,23 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
     if ns1 - shared_ns or ns2 - shared_ns:
         differences.append(f"Unique name servers: {ioc1}: {', '.join(ns1 - shared_ns) if ns1 - shared_ns else 'none'}, {ioc2}: {', '.join(ns2 - shared_ns) if ns2 - shared_ns else 'none'}")
 
+    # Compare name server domains
+    ns_domain_comparison = compare_name_server_domains(ns1, ns2)
+    if ns_domain_comparison:
+        if "Low-value similarity" in ns_domain_comparison:
+            low_value_similarities.append(ns_domain_comparison)
+        else:
+            similarities.append(ns_domain_comparison)
+
+    # Compare creation dates
+    creation_date1 = parse_date(data1.get('rdap', {}).get('creation_date'))
+    creation_date2 = parse_date(data2.get('rdap', {}).get('creation_date'))
+    creation_date_comparison = compare_creation_dates(creation_date1, creation_date2)
+    if "not comparable" in creation_date_comparison or "differ by more than 7 days" in creation_date_comparison:
+        differences.append(creation_date_comparison)
+    else:
+        similarities.append(creation_date_comparison)
+
     # Format comparison output
     output = f"Comparison between {ioc1} and {ioc2}:\n"
     output += "Similarities:\n" + "\n".join(f"- {sim}" for sim in similarities) + "\n" if similarities else "Similarities:\n- None\n"
@@ -63,6 +80,26 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
     output += "\nDifferences:\n" + "\n".join(f"- {diff}" for diff in differences) + "\n" if differences else "\nDifferences:\n- None\n"
     output += "\n"
     return output
+
+def compare_name_server_domains(ns1, ns2):
+    ns_domain1 = set(tuple(ns.split('.')[-2:]) for ns in ns1 if ns and 'Unknown' not in ns)
+    ns_domain2 = set(tuple(ns.split('.')[-2:]) for ns in ns2 if ns and 'Unknown' not in ns)
+    shared_ns_domain = ns_domain1 & ns_domain2
+    if shared_ns_domain:
+        if 'none' in shared_ns_domain or 'Unknown' in shared_ns_domain:
+            return f"Low-value similarity: Name Server Domain: {', '.join('.'.join(ns) for ns in shared_ns_domain)}"
+        else:
+            return f"P0101.011 - Registration: Name Server Domain: {', '.join('.'.join(ns) for ns in shared_ns_domain)}"
+    return None
+
+def compare_creation_dates(creation_date1, creation_date2):
+    if creation_date1 and creation_date2:
+        diff = abs(creation_date1 - creation_date2)
+        if diff <= timedelta(days=7):
+            return f"P0101.002 - Registration: Registration date (7 days): {creation_date1} and {creation_date2}"
+        else:
+            return f"Creation dates differ by more than 7 days: {creation_date1} vs {creation_date2}"
+    return f"Creation dates not comparable: {creation_date1} vs {creation_date2}"
 
 def compare_iocs(iocs):
     """Compare multiple IOCs pairwise and save results to a text file."""
