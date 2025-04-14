@@ -14,6 +14,57 @@ def is_ip(ioc):
     except ValueError:
         return False
 
+def format_single_ioc_output(ioc, data, output_dir):
+    """Format the output for a single IOC analysis and save to file."""
+    output = [f"Analysis for {ioc}:"]
+    output.append("=" * 50)
+    output.append(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    output.append("=" * 50)
+
+    # Add RDAP information
+    rdap = data.get("rdap", {})
+    output.append("\n(PTA0001: Domain) RDAP Data:")
+    for key, value in rdap.items():
+        if isinstance(value, list):
+            output.append(f"- {key.capitalize()}: {', '.join(value) if value else 'None'}")
+        else:
+            output.append(f"- {key.capitalize()}: {value if value else 'None'}")
+
+    # Add IP information
+    ips = data.get("ips", [])
+    if ips:
+        output.append("\n(PTA0002: IP) IPs:")
+        for ip in ips:
+            ip_info = f"- Address: {ip['address']} (Type: {ip['type']})"
+            if ip.get("hostname"):
+                ip_info += f", Hostname: {ip['hostname']}"
+            if ip.get("asn_number"):
+                ip_info += f", ASN: {ip['asn_number']} ({ip.get('asn_name', 'Unknown')}, {ip.get('asn_country', 'Unknown')})"
+            output.append(ip_info)
+    else:
+        output.append("- No IPs found.")
+
+    # Add SSL certificate information
+    ssl_certs = data.get("ssl_certs", [])
+    output.append("\n(PTA0003: SSL) SSL Certificates:")
+    if ssl_certs:
+        for cert in ssl_certs:
+            output.append(f"- ID: {cert.get('id', 'Unknown')}, Issuer: {cert.get('issuer_name', 'Unknown')}, Common Name: {cert.get('common_name', 'Unknown')}, Validity: {cert.get('not_before', 'Unknown')} to {cert.get('not_after', 'Unknown')}")
+    else:
+        output.append("- No SSL certificates found.")
+
+    # Create formatted string
+    formatted_output = "\n".join(output)
+    
+    # Save to file
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    analysis_filename = os.path.join(output_dir, f"Analysis-{ioc}-{timestamp}.txt")
+    with open(analysis_filename, "w") as f:
+        f.write(formatted_output)
+    
+    print(f"Analysis saved to {analysis_filename}")
+    return formatted_output, analysis_filename
+
 def check_ioc(ioc, tld_to_rdap):
     """Check a single IOC and save its metadata to a JSON file."""
     output_dir = "output"
@@ -72,3 +123,7 @@ def check_ioc(ioc, tld_to_rdap):
     with open(json_file, "w") as f:
         json.dump(data, f, indent=4)
     print(f"Done checking {ioc}. Info saved in {ioc}.json")
+
+    # Print detailed analysis output
+    formatted_output, analysis_filename = format_single_ioc_output(ioc, data, output_dir)
+    print(formatted_output)
