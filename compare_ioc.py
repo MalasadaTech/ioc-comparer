@@ -2,6 +2,10 @@ import os
 import json
 from datetime import datetime, timedelta
 from utils import get_issuing_org, parse_date
+ 
+def normalize_nameserver(ns):
+    """Normalize a nameserver by converting to lowercase and removing trailing dots."""
+    return ns.lower().rstrip('.')
 
 def compare_ssl_certificates(cert1, cert2):
     """Compare two SSL certificates and return similarities or differences."""
@@ -63,17 +67,23 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
     else:
         similarities.append(creation_date_comparison)
     
-    # Compare RDAP name servers
-    ns1 = set(data1.get('rdap', {}).get('name_servers', []))
-    ns2 = set(data2.get('rdap', {}).get('name_servers', []))
-    shared_ns = ns1 & ns2
+    # Compare RDAP name servers - normalize them first by removing trailing dots and converting to lowercase
+    ns1 = sorted([normalize_nameserver(ns) for ns in data1.get('rdap', {}).get('name_servers', [])])
+    ns2 = sorted([normalize_nameserver(ns) for ns in data2.get('rdap', {}).get('name_servers', [])])
+    
+    # Use sets for comparison after normalization
+    ns1_set = set(ns1)
+    ns2_set = set(ns2)
+    shared_ns = ns1_set & ns2_set
+    
     if shared_ns:
         if 'none' in shared_ns or 'Unknown' in shared_ns:
-            low_value_similarities.append(f"Low-value similarity: Name Server: {', '.join(shared_ns)}")
+            low_value_similarities.append(f"Low-value similarity: Name Server: {', '.join(sorted(shared_ns))}")
         else:
-            similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(shared_ns)}")
-    if ns1 - shared_ns or ns2 - shared_ns:
-        differences.append(f"Unique name servers: {ioc1}: {', '.join(ns1 - shared_ns) if ns1 - shared_ns else 'none'}, {ioc2}: {', '.join(ns2 - shared_ns) if ns2 - shared_ns else 'none'}")
+            similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(sorted(shared_ns))}")
+    
+    if ns1_set - shared_ns or ns2_set - shared_ns:
+        differences.append(f"Unique name servers: {ioc1}: {', '.join(sorted(ns1_set - shared_ns)) if ns1_set - shared_ns else 'none'}, {ioc2}: {', '.join(sorted(ns2_set - shared_ns)) if ns2_set - shared_ns else 'none'}")
 
     # Compare name server domains
     ns_domain_comparison = compare_name_server_domains(ns1, ns2)
@@ -94,6 +104,42 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
             similarities.append(f"P0201 - IP: {', '.join(shared_ips)}")
     else:
         differences.append(f"No shared IPs. {ioc1} has {', '.join(ips1) if ips1 else 'none'}, {ioc2} has {', '.join(ips2) if ips2 else 'none'}")
+
+    # Compare reverse DNS hostnames
+    hostnames1 = {ip['address']: ip['hostname'] for ip in data1.get('ips', []) if ip.get('hostname')}
+    hostnames2 = {ip['address']: ip['hostname'] for ip in data2.get('ips', []) if ip.get('hostname')}
+    
+    # Get unique hostnames from each dataset
+    unique_hostnames1 = set(hostnames1.values())
+    unique_hostnames2 = set(hostnames2.values())
+    shared_hostnames = unique_hostnames1 & unique_hostnames2
+    
+    if shared_hostnames:
+        if any(hostname is None for hostname in shared_hostnames):
+            shared_hostnames_filtered = {h for h in shared_hostnames if h is not None}
+            if shared_hostnames_filtered:
+                similarities.append(f"P0206 - PTR Records: {', '.join(shared_hostnames_filtered)}")
+        else:
+            similarities.append(f"P0206 - PTR Records: {', '.join(shared_hostnames)}")
+    
+    # Create a mapping of IP to hostname for both domains
+    ip_hostname_map = {}
+    for ip, hostname in hostnames1.items():
+        if hostname:
+            ip_hostname_map[ip] = hostname
+    for ip, hostname in hostnames2.items():
+        if hostname:
+            ip_hostname_map[ip] = hostname
+    
+    # Add information about each IP's hostname to the differences
+    if ip_hostname_map:
+        hostname_info = []
+        for ip in set(ips1) | set(ips2):
+            hostname = ip_hostname_map.get(ip)
+            if hostname:
+                hostname_info.append(f"{ip} resolves to {hostname}")
+        if hostname_info:
+            differences.append(f"Reverse DNS info: {'; '.join(hostname_info)}")
 
     # Compare AS names
     asn_names1 = set(ip['asn_name'] for ip in data1.get('ips', []) if 'asn_name' in ip)
@@ -149,14 +195,15 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
     return output
 
 def compare_name_server_domains(ns1, ns2):
+    # ns1 and ns2 are already sorted and normalized lists
     ns_domain1 = set(tuple(ns.split('.')[-2:]) for ns in ns1 if ns and 'Unknown' not in ns)
     ns_domain2 = set(tuple(ns.split('.')[-2:]) for ns in ns2 if ns and 'Unknown' not in ns)
     shared_ns_domain = ns_domain1 & ns_domain2
     if shared_ns_domain:
-        if 'none' in shared_ns_domain or 'Unknown' in shared_ns_domain:
-            return f"Low-value similarity: Name Server Domain: {', '.join('.'.join(ns) for ns in shared_ns_domain)}"
+        if any('none' in '.'.join(ns).lower() for ns in shared_ns_domain):
+            return f"Low-value similarity: Name Server Domain: {', '.join('.'.join(ns) for ns in sorted(shared_ns_domain))}"
         else:
-            return f"P0101.011 - Registration: Name Server Domain: {', '.join('.'.join(ns) for ns in shared_ns_domain)}"
+            return f"P0101.011 - Registration: Name Server Domain: {', '.join('.'.join(ns) for ns in sorted(shared_ns_domain))}"
     return None
 
 def compare_creation_dates(creation_date1, creation_date2):
