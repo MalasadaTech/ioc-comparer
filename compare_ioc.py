@@ -2,7 +2,7 @@ import os
 import json
 from datetime import datetime, timedelta
 from utils import get_issuing_org, parse_date
-
+ 
 def normalize_nameserver(ns):
     """Normalize a nameserver by converting to lowercase and removing trailing dots."""
     return ns.lower().rstrip('.')
