@@ -14,3 +14,6 @@
 - Mapped to DTF (https://github.com/MalasadaTech/defenders-threatmesh-framework)
 - Modified code to add any "none" or "Unknown" matches to a Low-value similarities array.
 - Added feature to match on name server domain (P0101.011: Registration: Name Server Domain (https://github.com/MalasadaTech/defenders-threatmesh-framework/blob/main/pivots/P0101.011.md))
+
+2025 APR 13:
+- Fixed error when comparing SSL when one SSL cert array is empty.

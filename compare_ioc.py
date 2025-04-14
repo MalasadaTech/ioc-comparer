@@ -3,6 +3,40 @@ import json
 from datetime import datetime, timedelta
 from utils import get_issuing_org, parse_date
 
+def compare_ssl_certificates(cert1, cert2):
+    """Compare two SSL certificates and return similarities or differences."""
+    similarities = []
+    differences = []
+
+    if not cert1 and not cert2:
+        similarities.append("Neither domain has SSL certificates")
+    elif not cert1:
+        differences.append("Only the second domain has SSL certificates")
+    elif not cert2:
+        differences.append("Only the first domain has SSL certificates")
+    else:
+        # Compare issuing organization
+        org1 = get_issuing_org(cert1.get('issuer_name'))
+        org2 = get_issuing_org(cert2.get('issuer_name'))
+        if org1 == org2 and org1:
+            similarities.append(f"P0301 - Issuer Organization: {org1}")
+        else:
+            differences.append(f"SSL cert issuing organizations differ: {org1 if org1 else 'none'} vs {org2 if org2 else 'none'}")
+
+        # Compare not_before dates
+        not_before1 = parse_date(cert1.get('not_before'))
+        not_before2 = parse_date(cert2.get('not_before'))
+        if not_before1 and not_before2:
+            diff = abs(not_before1 - not_before2)
+            if diff <= timedelta(days=7):
+                similarities.append(f"SSL cert not_before dates are within 7 days: {not_before1} and {not_before2}")
+            else:
+                differences.append(f"SSL cert not_before dates differ by more than 7 days: {not_before1} vs {not_before2}")
+        else:
+            differences.append(f"SSL cert not_before dates not comparable: {not_before1} vs {not_before2}")
+
+    return similarities, differences
+
 def compare_two_iocs(ioc1, ioc2, data1, data2):
     """Compare two IOCs and return a formatted comparison string."""
     similarities = []
@@ -96,6 +130,15 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
             similarities.append(f"P0203 - AS Country: {', '.join(shared_asn_countries)}")
     else:
         differences.append(f"No shared ASN Countries. {ioc1} has ASN Countries {', '.join(asn_countries1) if asn_countries1 else 'none'}, {ioc2} has ASN Countries {', '.join(asn_countries2) if asn_countries2 else 'none'}")
+
+    # Ensure the SSL certificate list is not empty before accessing the first element
+    cert1 = data1.get('ssl_certs', [None])[0] if data1.get('ssl_certs') else None
+    cert2 = data2.get('ssl_certs', [None])[0] if data2.get('ssl_certs') else None
+
+    # Compare SSL certificates
+    ssl_similarities, ssl_differences = compare_ssl_certificates(cert1, cert2)
+    similarities.extend(ssl_similarities)
+    differences.extend(ssl_differences)
 
     # Format comparison output
     output = f"Comparison between {ioc1} and {ioc2}:\n"
