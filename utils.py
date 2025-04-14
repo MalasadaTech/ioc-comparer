@@ -63,6 +63,9 @@ def get_rdap_bootstrap():
     url = "https://data.iana.org/rdap/dns.json"
     try:
         response = requests.get(url)
+        if 400 <= response.status_code < 600:
+            print(f"IANA RDAP bootstrap service returned HTTP {response.status_code}")
+            return {}
         response.raise_for_status()
         data = response.json()
         tld_to_rdap = {tld.lower(): urls[0] for entry in data['services'] for tld in entry[0] for urls in [entry[1]]}
@@ -85,6 +88,8 @@ def get_rdap_data(domain, tld_to_rdap):
         response = requests.get(rdap_url)
         if response.status_code == 404:
             return {"error": "Domain not found"}
+        elif 400 <= response.status_code < 600:
+            return {"error": f"RDAP server returned HTTP {response.status_code}"}
         response.raise_for_status()
         data = response.json()
         status = data.get('status', [])
@@ -120,6 +125,8 @@ def get_ssl_certs(domain):
     url = f"https://crt.sh/?q={domain}&output=json"
     try:
         response = requests.get(url)
+        if 400 <= response.status_code < 600:
+            return {"error": f"crt.sh returned HTTP {response.status_code}"}
         response.raise_for_status()
         certs = response.json()
         if not certs:
@@ -143,7 +150,7 @@ def get_ssl_certs(domain):
         return parsed_certs
     except requests.RequestException as e:
         print(f"Error querying crt.sh for {domain}: {e}")
-        return {"error": str(e)}
+        return {"error": f"SSL cert lookup failed: {str(e)}"}
 
 def get_issuing_org(issuer_name):
     """Extract issuing organization from issuer_name."""
