@@ -7,6 +7,23 @@ def normalize_nameserver(ns):
     """Normalize a nameserver by converting to lowercase and removing trailing dots."""
     return ns.lower().rstrip('.')
 
+def normalize_registrar(registrar):
+    """Extract registrar ID from parentheses if it exists."""
+    if not registrar:
+        return None
+    
+    # Extract ID from parentheses if it exists
+    registrar_id = None
+    if '(' in registrar and ')' in registrar:
+        parts = registrar.split('(')
+        if len(parts) > 1:
+            id_part = parts[-1].split(')')[0].strip()
+            if id_part.isdigit():
+                registrar_id = id_part
+    
+    # Return the full registrar name and the ID
+    return registrar, registrar_id
+
 def compare_ssl_certificates(cert1, cert2):
     """Compare two SSL certificates and return similarities or differences."""
     similarities = []
@@ -50,11 +67,28 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
     # Compare RDAP registrar
     registrar1 = data1.get('rdap', {}).get('registrar')
     registrar2 = data2.get('rdap', {}).get('registrar')
-    if registrar1 == registrar2 and registrar1:
-        if 'none' in registrar1 or 'Unknown' in registrar1:
-            low_value_similarities.append(f"Low-value similarity: Registrar: {registrar1}")
+    
+    # Use normalized registrar comparison
+    norm_reg1 = normalize_registrar(registrar1)
+    norm_reg2 = normalize_registrar(registrar2)
+    
+    if norm_reg1 and norm_reg2:
+        full_name1, id1 = norm_reg1
+        full_name2, id2 = norm_reg2
+        
+        # First check if the registrar IDs match
+        if id1 and id2 and id1 == id2:
+            # Check if the names also match
+            if full_name1 == full_name2:
+                if 'none' in (full_name1.lower() if full_name1 else '') or 'Unknown' in (full_name1 if full_name1 else ''):
+                    low_value_similarities.append(f"Low-value similarity: Registrar: {full_name1}")
+                else:
+                    similarities.append(f"P0101.001 - Registration: Registrar: {full_name1}")
+            else:
+                # IDs match but names differ - still a similarity, but note the difference
+                similarities.append(f"P0101.001 - Registration: Registrar ID: {id1} ({full_name1} vs {full_name2})")
         else:
-            similarities.append(f"P0101.001 - Registration: Registrar: {registrar1}")
+            differences.append(f"Registrars differ: {ioc1}: {registrar1 if registrar1 else 'none'}, {ioc2}: {registrar2 if registrar2 else 'none'}")
     else:
         differences.append(f"Registrars differ: {ioc1}: {registrar1 if registrar1 else 'none'}, {ioc2}: {registrar2 if registrar2 else 'none'}")
 
