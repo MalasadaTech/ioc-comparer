@@ -39,6 +39,8 @@ def compare_ssl_certificates(cert1, cert2):
         # Compare issuing organization
         org1 = get_issuing_org(cert1.get('issuer_name'))
         org2 = get_issuing_org(cert2.get('issuer_name'))
+        
+        # The get_issuing_org function now properly handles quotes
         if org1 == org2 and org1:
             similarities.append(f"P0301 - Issuer Organization: {org1}")
         else:
