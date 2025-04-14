@@ -181,7 +181,10 @@ def get_issuing_org(issuer_name):
     parts = issuer_name.split(', ')
     for part in parts:
         if part.startswith('O='):
-            return part[2:]
+            # Extract the organization name and completely remove any quotes
+            org_name = part[2:]
+            # Remove quotes from the organization name to prevent display issues
+            return org_name.replace('"', '')
     return None
 
 def parse_date(date_str):
