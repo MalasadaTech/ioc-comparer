@@ -1,5 +1,6 @@
 try:
     import dns.resolver
+    import dns.reversename
 except ImportError:
     raise ImportError("The 'dnspython' library is required but not installed. Install it using 'pip install dnspython'.")
 import ipaddress
@@ -7,24 +8,42 @@ import requests
 from datetime import datetime, timezone
 import time
 
+def get_ptr_record(ip):
+    """Perform a reverse DNS lookup for an IP address."""
+    try:
+        addr = dns.reversename.from_address(ip)
+        answers = dns.resolver.resolve(addr, 'PTR')
+        return str(answers[0]).rstrip('.')
+    except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+        return None
+    except Exception as e:
+        print(f"Error resolving PTR record for {ip}: {e}")
+        return None
+
 def get_ips(domain):
-    """Resolve IP addresses (A and AAAA records) for a domain."""
-    ips = []
+    """Resolve IP addresses (A and AAAA records) for a domain and perform reverse lookups."""
+    ip_data = []
     try:
         answers = dns.resolver.resolve(domain, 'A')
-        ips.extend([str(answer) for answer in answers])
+        for answer in answers:
+            ip = str(answer)
+            hostname = get_ptr_record(ip)
+            ip_data.append({"ip": ip, "type": "A", "hostname": hostname})
     except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
         pass
     except Exception as e:
         print(f"Error resolving A records for {domain}: {e}")
     try:
         answers = dns.resolver.resolve(domain, 'AAAA')
-        ips.extend([str(answer) for answer in answers])
+        for answer in answers:
+            ip = str(answer)
+            hostname = get_ptr_record(ip)
+            ip_data.append({"ip": ip, "type": "AAAA", "hostname": hostname})
     except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
         pass
     except Exception as e:
         print(f"Error resolving AAAA records for {domain}: {e}")
-    return ips
+    return ip_data
 
 def reverse_ip(ip):
     """Reverse an IP address for ASN lookup."""
@@ -103,7 +122,10 @@ def get_rdap_data(domain, tld_to_rdap):
             "handle": e.get('handle', "none")
         } for e in entities if 'registrant' in e.get('roles', []) and 'vcardArray' in e and len(e['vcardArray']) > 1), {"name": "Unknown", "handle": "none"})
         registrant = f"{registrant['name']} ({registrant['handle']})"
-        name_servers = sorted([ns['ldhName'].lower() for ns in data.get('nameservers', [])])
+        
+        # Normalize and sort name servers - remove trailing dots and convert to lowercase
+        name_servers = sorted([ns['ldhName'].lower().rstrip('.') for ns in data.get('nameservers', [])])
+        
         return {
             "status": status,
             "creation_date": creation_date,

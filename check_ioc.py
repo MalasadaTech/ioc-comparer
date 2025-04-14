@@ -41,16 +41,22 @@ def check_ioc(ioc, tld_to_rdap):
 
     # Handle domain
     time.sleep(random.uniform(1, 3))  # Random delay between 1000ms and 3000ms
-    ips = get_ips(ioc)
+    ip_data = get_ips(ioc)
     ip_list = []
+    
     # Update the ASN extraction to include both asn_name and asn_country
-    for ip in ips:
-        asn_number, asn_name, asn_country = get_asn(ip)  # Update get_asn to return asn_country
-        ip_dict = {"address": ip}
+    for ip_entry in ip_data:
+        ip_address = ip_entry["ip"]
+        asn_number, asn_name, asn_country = get_asn(ip_address)
+        ip_dict = {
+            "address": ip_address,
+            "type": ip_entry["type"],
+            "hostname": ip_entry["hostname"]  # Include the reverse DNS lookup result
+        }
         if asn_number:
             ip_dict["asn_number"] = asn_number
             ip_dict["asn_name"] = asn_name
-            ip_dict["asn_country"] = asn_country  # Add asn_country to the IP dictionary
+            ip_dict["asn_country"] = asn_country
         ip_list.append(ip_dict)
 
     rdap_data = get_rdap_data(ioc, tld_to_rdap)
