@@ -60,7 +60,7 @@ def compare_ssl_certificates(cert1, cert2):
 
     return similarities, differences
 
-def compare_two_iocs(ioc1, ioc2, data1, data2):
+def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
     """Compare two IOCs and return a formatted comparison string."""
     similarities = []
     low_value_similarities = []
@@ -128,6 +128,11 @@ def compare_two_iocs(ioc1, ioc2, data1, data2):
             low_value_similarities.append(ns_domain_comparison)
         else:
             similarities.append(ns_domain_comparison)
+
+    # Substring similarity check
+    if substring:
+        if substring in ioc1 and substring in ioc2:
+            similarities.append(f"P0102.002: Domain: Substring: {substring}")
 
     # Compare IPs
     ips1 = [ip['address'] for ip in data1.get('ips', [])]
@@ -251,7 +256,7 @@ def compare_creation_dates(creation_date1, creation_date2):
             return f"Creation dates differ by more than 7 days: {creation_date1} vs {creation_date2}"
     return f"Creation dates not comparable: {creation_date1} vs {creation_date2}"
 
-def compare_iocs(iocs):
+def compare_iocs(iocs, substring=None):
     """Compare multiple IOCs pairwise and save results to a text file."""
     output_dir = "output"
     if not os.path.exists(output_dir):
@@ -273,7 +278,7 @@ def compare_iocs(iocs):
                     continue
                 with open(file1, "r") as f1, open(file2, "r") as f2:
                     data1, data2 = json.load(f1), json.load(f2)
-                comparison = compare_two_iocs(ioc1, ioc2, data1, data2)
+                comparison = compare_two_iocs(ioc1, ioc2, data1, data2, substring=substring)
                 f.write(comparison)
 
     print(f"Comparison analysis saved to {analysis_filename}")

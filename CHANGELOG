@@ -22,3 +22,6 @@
 - Fixed problem when two domains match on the Registrar ID, but the registrar has a /d/b/a on one entry so it counted as a difference. It's now a match with a callout.
 - Fixed problem with opening double quotes in the SSL Issuer Org output.
 - Added feature to analyze single IOCs. Previously, it just stored it in a JSON if only one IOC was checked. Now it does the lookups and stores it in an analysis file to review later.
+
+2025 APR 14:
+- Added substring check with --sstring "substring". Could be useful for bulk checks. May need to circle back to this one and add an auto-check for substrings for string matches of three or more or something.
