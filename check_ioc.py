@@ -39,12 +39,11 @@ def format_single_ioc_output(ioc, data, output_dir):
     if ips:
         output.append("\n(PTA0002: IP) IPs:")
         for ip in ips:
-            ip_info = f"- Address: {ip['address']} (Type: {ip['type']})"
+            output.append(f"- Address: {ip['address']} (Type: {ip['type']})")
             if ip.get("hostname"):
-                ip_info += f", Hostname: {ip['hostname']}"
+                output.append(f"  Hostname: {ip['hostname']}")
             if ip.get("asn_number"):
-                ip_info += f", ASN: {ip['asn_number']} ({ip.get('asn_name', 'Unknown')}, {ip.get('asn_country', 'Unknown')})"
-            output.append(ip_info)
+                output.append(f"  ASN: {ip['asn_number']} ({ip.get('asn_name', 'Unknown')}, {ip.get('asn_country', 'Unknown')})")
     else:
         output.append("- No IPs found.")
 
