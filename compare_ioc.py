@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime, timedelta
-from utils import get_issuing_org, parse_date
+from utils import get_issuing_org, parse_date, calculate_nshash
  
 def normalize_nameserver(ns):
     """Normalize a nameserver by converting to lowercase and removing trailing dots."""
@@ -113,13 +113,27 @@ def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
     shared_ns = ns1_set & ns2_set
     
     if shared_ns:
+        # Calculate nshash for shared nameservers
+        shared_ns_sorted = sorted(shared_ns)
+        nshash = calculate_nshash(shared_ns_sorted)
+        
         if 'none' in shared_ns or 'Unknown' in shared_ns:
-            low_value_similarities.append(f"Low-value similarity: Name Server: {', '.join(sorted(shared_ns))}")
+            low_value_similarities.append(f"Low-value similarity: Name Server: {', '.join(shared_ns_sorted)} (nshash: {nshash})")
         else:
-            similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(sorted(shared_ns))}")
+            similarities.append(f"P0101.010 - Registration: Name Server: {', '.join(shared_ns_sorted)} (nshash: {nshash})")
     
     if ns1_set - shared_ns or ns2_set - shared_ns:
-        differences.append(f"Unique name servers: {ioc1}: {', '.join(sorted(ns1_set - shared_ns)) if ns1_set - shared_ns else 'none'}, {ioc2}: {', '.join(sorted(ns2_set - shared_ns)) if ns2_set - shared_ns else 'none'}")
+        # Calculate nshash for each domain's unique nameservers
+        unique_ns1 = sorted(ns1_set - shared_ns)
+        unique_ns2 = sorted(ns2_set - shared_ns)
+        
+        nshash1 = calculate_nshash(unique_ns1) if unique_ns1 else None
+        nshash2 = calculate_nshash(unique_ns2) if unique_ns2 else None
+        
+        unique_ns_str1 = f"{', '.join(unique_ns1)} (nshash: {nshash1})" if unique_ns1 else 'none'
+        unique_ns_str2 = f"{', '.join(unique_ns2)} (nshash: {nshash2})" if unique_ns2 else 'none'
+        
+        differences.append(f"Unique name servers: {ioc1}: {unique_ns_str1}, {ioc2}: {unique_ns_str2}")
 
     # Compare name server domains
     ns_domain_comparison = compare_name_server_domains(ns1, ns2)
@@ -240,11 +254,16 @@ def compare_name_server_domains(ns1, ns2):
     ns_domain1 = set(tuple(ns.split('.')[-2:]) for ns in ns1 if ns and 'Unknown' not in ns)
     ns_domain2 = set(tuple(ns.split('.')[-2:]) for ns in ns2 if ns and 'Unknown' not in ns)
     shared_ns_domain = ns_domain1 & ns_domain2
+    
     if shared_ns_domain:
+        # Create a list of domain strings from the tuples
+        domain_strings = ['.'.join(ns) for ns in sorted(shared_ns_domain)]
+        
+        # Remove the nshash from the output as specified
         if any('none' in '.'.join(ns).lower() for ns in shared_ns_domain):
-            return f"Low-value similarity: Name Server Domain: {', '.join('.'.join(ns) for ns in sorted(shared_ns_domain))}"
+            return f"Low-value similarity: Name Server Domain: {', '.join(domain_strings)}"
         else:
-            return f"P0101.011 - Registration: Name Server Domain: {', '.join('.'.join(ns) for ns in sorted(shared_ns_domain))}"
+            return f"P0101.011 - Registration: Name Server Domain: {', '.join(domain_strings)}"
     return None
 
 def compare_creation_dates(creation_date1, creation_date2):

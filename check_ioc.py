@@ -4,7 +4,7 @@ import random
 import time
 import ipaddress
 from datetime import datetime, timezone, timedelta
-from utils import get_ips, get_asn, get_rdap_data, get_ssl_certs
+from utils import get_ips, get_asn, get_rdap_data, get_ssl_certs, calculate_nshash
 
 def is_ip(ioc):
     """Determine if an IOC is an IP address."""
@@ -25,7 +25,11 @@ def format_single_ioc_output(ioc, data, output_dir):
     rdap = data.get("rdap", {})
     output.append("\n(PTA0001: Domain) RDAP Data:")
     for key, value in rdap.items():
-        if isinstance(value, list):
+        if key == "name_servers" and value:
+            # Calculate the nshash for name servers
+            nshash = calculate_nshash(value)
+            output.append(f"- {key.capitalize()}: {', '.join(value) if value else 'None'} (nshash: {nshash})")
+        elif isinstance(value, list):
             output.append(f"- {key.capitalize()}: {', '.join(value) if value else 'None'}")
         else:
             output.append(f"- {key.capitalize()}: {value if value else 'None'}")

@@ -25,3 +25,7 @@
 
 2025 APR 14:
 - Added substring check with --sstring "substring". Could be useful for bulk checks. May need to circle back to this one and add an auto-check for substrings for string matches of three or more or something.
+
+2025 APR 15:
+- Added a feature to calculate the nshash for each single domain analysis, and also for the pairwise analysis. This will be beneficial for when you need to pivot in Silent Push.
+
