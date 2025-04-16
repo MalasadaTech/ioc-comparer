@@ -7,6 +7,7 @@ import ipaddress
 import requests
 from datetime import datetime, timezone
 import time
+import hashlib  # Add this import for MD5 hash calculation
 
 def get_ptr_record(ip):
     """Perform a reverse DNS lookup for an IP address."""
@@ -200,6 +201,27 @@ def parse_date(date_str):
         except ValueError:
             return None
     return None
+
+def calculate_nshash(name_servers):
+    """
+    Calculate the MD5 hash of nameservers for Silent Push pivoting.
+    
+    Args:
+        name_servers (list): A list of nameserver strings
+        
+    Returns:
+        str: MD5 hash of the comma-joined nameservers without spaces
+    """
+    if not name_servers:
+        return None
+    
+    # Sort, normalize and join nameservers with commas (no spaces)
+    sorted_ns = sorted([ns.lower().rstrip('.') for ns in name_servers])
+    ns_string = ','.join(sorted_ns)
+    
+    # Calculate MD5 hash
+    md5_hash = hashlib.md5(ns_string.encode('utf-8')).hexdigest()
+    return md5_hash
 
 def re_fang_domain(ioc):
     """Remove defanging from an IOC (e.g., example[.]com -> example.com)."""
