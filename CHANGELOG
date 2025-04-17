@@ -29,3 +29,7 @@
 2025 APR 15:
 - Added a feature to calculate the nshash for each single domain analysis, and also for the pairwise analysis. This will be beneficial for when you need to pivot in Silent Push.
 - Modified the IP Address output section for the single domain analysis so that the address, hostname, and ASN are all on separate lines for better readability.
+
+2025 APR 17:
+- Added AlienVault OTX integration for threat intelligence enrichment.
+

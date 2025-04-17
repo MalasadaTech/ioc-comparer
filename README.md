@@ -5,13 +5,15 @@
 ## Features
 
 - **IP Resolution**: Retrieves IPv4 and IPv6 addresses for each domain using DNS lookups.
-- **ASN Lookup**: Identifies the ASN number and name for each IP address via Team Cymru’s DNS service.
+- **ASN Lookup**: Identifies the ASN number and name for each IP address via Team Cymru's DNS service.
 - **RDAP Data**: Fetches domain registration details (status, creation/expiration dates, registrar, name servers) from RDAP servers.
 - **SSL Certificates**: Queries crt.sh for SSL certificate details (certificate ID, issuer, common name, validity dates).
+- **OTX Integration**: Automatically enriches IOCs with threat intelligence from AlienVault Open Threat Exchange (OTX).
 - **Comparison**: Analyzes the collected metadata, focusing on:
   - Shared IPs and ASNs.
   - RDAP status, registrar, name servers, and date proximity (within 7 days for creation/expiration).
   - SSL certificate issuing organization and `not_before` date proximity (within 7 days) for the first certificate of each domain.
+  - OTX data including shared threat reports, reputation scores, and pulse information.
 - **Output**: Saves all data to a JSON file (`domains.json`) and prints a human-readable comparison of similarities and differences.
 
 ## Prerequisites
@@ -40,6 +42,10 @@
    pip install dnspython requests
    ```
 
+4. **Configure OTX API Key**:
+   - Copy `config.ini.template` to `config.ini`
+   - Add your OTX API key to the config file under the [API_KEYS] section
+
 ## Usage
 
 Run the script from the command line by providing two domain names as arguments:
@@ -47,6 +53,11 @@ Run the script from the command line by providing two domain names as arguments:
 ```bash
 python main.py domain1 domain2
 ```
+
+### Options
+
+- `--sstring`: Specify a substring to search for in domain names.
+- `--config`: Specify a path to configuration file with API keys (default: config.ini).
 
 ### Example
 
@@ -68,6 +79,7 @@ Similarities:
 - P0101.010 - Registration: Name Server: ns1.example.com
 - P0201 - IP: 93.184.216.34
 - P0203 - AS: 15133
+- OTX Shared Threat Reports: Malicious Domain Campaign
 
 Differences:
 - SSL cert not_before dates differ by more than 7 days: 2023-10-01T00:00:00+00:00 vs 2023-11-01T00:00:00+00:00
@@ -94,20 +106,44 @@ Differences:
                 "not_before": "2023-10-01T00:00:00",
                 "not_after": "2024-01-01T00:00:00"
             }
-        ]
+        ],
+        "otx": {
+            "pulse_count": 5,
+            "recent_pulses": ["Malicious Domain Campaign", "Phishing Infrastructure"],
+            "most_recent_pulse": "2025-01-15T00:00:00Z",
+            "reputation": {
+                "reputation": -2,
+                "threat_score": 3.5
+            }
+        }
     },
     "example.org": {...}
 }
 ```
+
+## OTX Integration
+
+The tool automatically enriches IOCs with threat intelligence from AlienVault OTX:
+
+1. Copy `config.ini.template` to `config.ini`
+2. Add your OTX API key to the config file under the [API_KEYS] section
+3. Run the tool normally - OTX enrichment happens automatically
+
+The OTX integration provides:
+- General indicator details
+- Pulse (threat report) information
+- Reputation data for IPs and domains
+- Comparison of shared threat reports between IOCs
 
 ## How It Works
 
 ### Data Collection
 
 - Resolves domain IPs using `dns.resolver`.
-- Queries ASNs via Team Cymru’s DNS TXT records.
+- Queries ASNs via Team Cymru's DNS TXT records.
 - Fetches RDAP data using the IANA bootstrap file and direct HTTP requests.
 - Retrieves SSL certificates from crt.sh.
+- Enriches IOCs with threat intelligence from OTX.
 
 ### Comparison
 
@@ -116,6 +152,10 @@ Differences:
 - For SSL certificates, uses the first certificate from each domain to compare:
   - Issuing organization (extracted from `issuer_name`).
   - `not_before` dates (within 7 days).
+- For OTX data, compares:
+  - Shared threat reports (pulses)
+  - Reputation and threat scores
+  - Timing of most recent threat reports
 
 ### Output
 
@@ -129,7 +169,8 @@ Differences:
 
 ## Limitations
 
-- **Rate Limits**: External services (RDAP servers, crt.sh) may impose rate limits, potentially causing failures with excessive use.
-- **Data Availability**: Some domains may lack RDAP support or SSL certificates, resulting in partial data.
+- **Rate Limits**: External services (RDAP servers, crt.sh, OTX) may impose rate limits, potentially causing failures with excessive use.
+- **Data Availability**: Some domains may lack RDAP support, SSL certificates, or OTX data, resulting in partial analysis.
 - **Time Sensitivity**: Date comparisons depend on the current UTC time when the script runs.
+- **API Key Requirement**: OTX lookups require a valid API key from AlienVault.
 

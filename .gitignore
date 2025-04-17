@@ -1,3 +1,8 @@
-
 # Ignore output folder
 output/
+
+# API keys and secrets
+.env
+config.ini
+secrets/
+credentials.json
