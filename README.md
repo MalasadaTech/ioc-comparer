@@ -10,6 +10,7 @@
 - **SSL Certificates**: Queries crt.sh for SSL certificate details (certificate ID, issuer, common name, validity dates).
 - **OTX Integration**: Automatically enriches IOCs with threat intelligence from AlienVault Open Threat Exchange (OTX).
 - **VirusTotal Integration**: Enriches IOCs with VirusTotal data including vendor score, community score, and tags.
+- **ThreatFox Integration**: Enriches IOCs with malware and threat intelligence from ThreatFox.
 - **Comparison**: Analyzes the collected metadata, focusing on:
   - Shared IPs and ASNs.
   - RDAP status, registrar, name servers, and date proximity (within 7 days for creation/expiration).
@@ -49,6 +50,7 @@
    - Add your API keys to the config file under the [API_KEYS] section:
      - OTX API key (optional) - enables OTX threat intelligence enrichment
      - VirusTotal API key (optional) - enables VirusTotal enrichment
+     - ThreatFox API key (optional) - enables ThreatFox malware intelligence enrichment
 
 ## Usage
 
@@ -123,6 +125,21 @@ The VirusTotal integration provides:
 - First submission and last analysis dates
 - Comparison of all these data points between IOCs
 
+### ThreatFox Integration
+
+ThreatFox enrichment provides additional threat intelligence about malware and IOCs:
+
+1. Copy `config.ini.template` to `config.ini` if you haven't already
+2. Add your ThreatFox API key to the config file under the [API_KEYS] section
+3. Run the tool normally - ThreatFox enrichment happens automatically if a valid key is present
+
+The ThreatFox integration provides:
+- Threat type and description for IOCs
+- Malware family and printable name information
+- Malware aliases and related samples
+- Confidence level and first seen dates
+- Comparison of shared threat intelligence between IOCs
+
 ## How It Works
 
 ### Data Collection
@@ -131,7 +148,7 @@ The VirusTotal integration provides:
 - Queries ASNs via Team Cymru's DNS TXT records.
 - Fetches RDAP data using the IANA bootstrap file and direct HTTP requests.
 - Retrieves SSL certificates from crt.sh.
-- Enriches IOCs with threat intelligence from OTX and VirusTotal.
+- Enriches IOCs with threat intelligence from OTX, VirusTotal, and ThreatFox.
 
 ### Comparison
 
@@ -149,6 +166,11 @@ The VirusTotal integration provides:
   - Community reputation scores
   - Shared tags
   - First submission dates proximity
+- For ThreatFox data, compares:
+  - Threat types and malware families
+  - Shared malware aliases
+  - First seen dates (within 7 days)
+  - Confidence levels and associated samples
 
 ### Output
 

@@ -13,6 +13,10 @@ try:
     from vt_client import VTClient
 except ImportError:
     VTClient = None
+try:
+    from threatfox_client import ThreatFoxClient
+except ImportError:
+    ThreatFoxClient = None
 
 def is_ip(ioc):
     """Determine if an IOC is an IP address."""
@@ -58,7 +62,10 @@ def format_single_ioc_output(ioc, data, output_dir):
     # Add SSL certificate information
     ssl_certs = data.get("ssl_certs", [])
     output.append("\n(PTA0003: SSL) SSL Certificates:")
-    if ssl_certs:
+    if isinstance(ssl_certs, dict) and "error" in ssl_certs:
+        # Handle error case
+        output.append(f"- Error: {ssl_certs['error']}")
+    elif ssl_certs:
         for cert in ssl_certs:
             output.append(f"- ID: {cert.get('id', 'Unknown')}, Issuer: {cert.get('issuer_name', 'Unknown')}, Common Name: {cert.get('common_name', 'Unknown')}, Validity: {cert.get('not_before', 'Unknown')} to {cert.get('not_after', 'Unknown')}")
     else:
@@ -182,6 +189,57 @@ def format_single_ioc_output(ioc, data, output_dir):
     else:
         output.append("\nVirusTotal Data: Not available")
 
+    # Add ThreatFox information if available
+    threatfox_data = data.get("threatfox", {})
+    if threatfox_data:
+        output.append("\nThreatFox Data:")
+        
+        # Add IOC information
+        if "ioc" in threatfox_data:
+            output.append(f"- ThreatFox IOC: {threatfox_data['ioc']}")
+        
+        # Add threat type and description
+        if "threat_type" in threatfox_data and "threat_type_desc" in threatfox_data:
+            output.append(f"- ThreatFox Threat Type: {threatfox_data['threat_type']} ({threatfox_data['threat_type_desc']})")
+        
+        # Add malware information
+        if "malware" in threatfox_data and "malware_printable" in threatfox_data:
+            output.append(f"- ThreatFox Malware: {threatfox_data['malware_printable']} ({threatfox_data['malware']})")
+            
+            # Add malware aliases if available
+            if "malware_alias" in threatfox_data and threatfox_data["malware_alias"]:
+                output.append(f"- ThreatFox Malware Aliases: {threatfox_data['malware_alias']}")
+        
+        # Add confidence level
+        if "confidence_level" in threatfox_data:
+            output.append(f"- ThreatFox Confidence Level: {threatfox_data['confidence_level']}")
+        
+        # Add first seen date
+        if "first_seen" in threatfox_data:
+            output.append(f"- ThreatFox First Seen: {threatfox_data['first_seen']}")
+        
+        # Add reporter information
+        if "reporter" in threatfox_data:
+            output.append(f"- ThreatFox Reporter: {threatfox_data['reporter']}")
+        
+        # Add tags if available
+        if "tags" in threatfox_data and threatfox_data["tags"]:
+            output.append(f"- ThreatFox Tags: {threatfox_data['tags']}")
+            
+        # Add malware samples count if available
+        if "malware_samples_count" in threatfox_data:
+            output.append(f"- ThreatFox Associated Malware Samples: {threatfox_data['malware_samples_count']}")
+            
+            # Add sample info if available
+            if "sample_info" in threatfox_data:
+                sample = threatfox_data["sample_info"]
+                if "sha256_hash" in sample:
+                    output.append(f"- ThreatFox Sample SHA256: {sample['sha256_hash']}")
+                if "malware_bazaar" in sample:
+                    output.append(f"- ThreatFox Sample Link: {sample['malware_bazaar']}")
+    else:
+        output.append("\nThreatFox Data: Not available")
+
     # Create formatted string
     formatted_output = "\n".join(output)
     
@@ -256,6 +314,14 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
             vt_client = VTClient(config_path=config_path)
         except (FileNotFoundError, ValueError) as e:
             vt_client = None
+
+    # Initialize the ThreatFox client
+    threatfox_client = None
+    if ThreatFoxClient:
+        try:
+            threatfox_client = ThreatFoxClient(config_path=config_path)
+        except (FileNotFoundError, ValueError) as e:
+            threatfox_client = None
 
     # Determine IOC type
     ioc_type = determine_ioc_type(ioc)
@@ -348,6 +414,14 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
             # Extract summary data
             vt_data = vt_client.extract_vt_summary(vt_details)
 
+    # Get ThreatFox data when available
+    threatfox_data = {}
+    if threatfox_client and threatfox_client.api_key:
+        # Search for IOC in ThreatFox
+        threatfox_result = threatfox_client.search_ioc(ioc)
+        if threatfox_result:
+            threatfox_data = threatfox_result
+
     data = {
         "check_date": current_time.isoformat(),
         "ips": ip_list,
@@ -362,6 +436,10 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
     # Add VirusTotal data if it exists
     if vt_data:
         data["virustotal"] = vt_data
+
+    # Add ThreatFox data if it exists
+    if threatfox_data:
+        data["threatfox"] = threatfox_data
 
     with open(json_file, "w") as f:
         json.dump(data, f, indent=4)
