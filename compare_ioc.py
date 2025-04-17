@@ -138,6 +138,96 @@ def compare_otx_data(otx1, otx2, ioc1, ioc2):
     
     return similarities, enriched_similarities, low_value_similarities, differences
 
+def compare_vt_data(vt1, vt2, ioc1, ioc2):
+    """Compare VirusTotal data for two IOCs and return similarities and differences."""
+    similarities = []
+    enriched_similarities = []
+    low_value_similarities = []
+    differences = []
+    
+    # If neither has VirusTotal data, return early
+    if not vt1 and not vt2:
+        differences.append("No VirusTotal data available for either IOC")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    
+    # If only one has VirusTotal data
+    if not vt1:
+        differences.append(f"Only {ioc2} has VirusTotal data")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    if not vt2:
+        differences.append(f"Only {ioc1} has VirusTotal data")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    
+    # Compare vendor assessment stats
+    stats1 = vt1.get('vendor_stats', {})
+    stats2 = vt2.get('vendor_stats', {})
+    
+    if stats1 and stats2:
+        # Calculate malicious percentages
+        total1 = sum(stats1.values()) or 1  # Avoid division by zero
+        total2 = sum(stats2.values()) or 1
+        
+        malicious1 = stats1.get('malicious', 0)
+        malicious2 = stats2.get('malicious', 0)
+        
+        suspicious1 = stats1.get('suspicious', 0)
+        suspicious2 = stats2.get('suspicious', 0)
+        
+        bad_percent1 = (malicious1 + suspicious1) / total1 * 100
+        bad_percent2 = (malicious2 + suspicious2) / total2 * 100
+        
+        # Compare malicious percentages
+        # Consider similar if both are below 5% or both are within 10 percentage points
+        if (bad_percent1 < 5 and bad_percent2 < 5) or abs(bad_percent1 - bad_percent2) <= 10:
+            enriched_similarities.append(f"VT Similar Malicious Ratings: {bad_percent1:.1f}% vs {bad_percent2:.1f}%")
+        else:
+            differences.append(f"VT Malicious ratings differ significantly: {ioc1}: {bad_percent1:.1f}%, {ioc2}: {bad_percent2:.1f}%")
+    
+    # Compare community reputation scores
+    score1 = vt1.get('community_score')
+    score2 = vt2.get('community_score')
+    
+    if score1 is not None and score2 is not None:
+        # If both scores are positive or both are negative, or close to each other
+        if (score1 > 0 and score2 > 0) or (score1 < 0 and score2 < 0) or abs(score1 - score2) <= 20:
+            enriched_similarities.append(f"VT Similar Community Scores: {score1} vs {score2}")
+        else:
+            differences.append(f"VT Community scores differ: {ioc1}: {score1}, {ioc2}: {score2}")
+    
+    # Compare tags
+    tags1 = set(vt1.get('tags', []))
+    tags2 = set(vt2.get('tags', []))
+    shared_tags = tags1 & tags2
+    
+    if shared_tags:
+        enriched_similarities.append(f"VT Shared Tags: {', '.join(shared_tags)}")
+    
+    # If there are different tags, note them
+    unique_tags1 = tags1 - shared_tags
+    unique_tags2 = tags2 - shared_tags
+    
+    if unique_tags1:
+        differences.append(f"VT tags unique to {ioc1}: {', '.join(unique_tags1)}")
+    if unique_tags2:
+        differences.append(f"VT tags unique to {ioc2}: {', '.join(unique_tags2)}")
+    
+    # Compare submission dates if both are present
+    first_date1 = vt1.get('first_submission_date')
+    first_date2 = vt2.get('first_submission_date')
+    
+    if first_date1 and first_date2:
+        # Convert timestamps to datetime objects
+        first_dt1 = datetime.fromtimestamp(first_date1, tz=datetime.now().astimezone().tzinfo)
+        first_dt2 = datetime.fromtimestamp(first_date2, tz=datetime.now().astimezone().tzinfo)
+        
+        # Check if they're within 7 days of each other
+        if abs(first_dt1 - first_dt2) <= timedelta(days=7):
+            enriched_similarities.append(f"VT first submission dates within 7 days: {first_dt1.date()} and {first_dt2.date()}")
+        else:
+            differences.append(f"VT first submission dates differ by more than 7 days: {first_dt1.date()} vs {first_dt2.date()}")
+    
+    return similarities, enriched_similarities, low_value_similarities, differences
+
 def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
     """Compare two IOCs and return a formatted comparison string."""
     similarities = []
@@ -330,6 +420,17 @@ def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
         enriched_similarities.extend(otx_enriched_similarities)
         low_value_similarities.extend(otx_low_value_similarities)
         differences.extend(otx_differences)
+    
+    # Compare VirusTotal data if available
+    vt1 = data1.get('virustotal', {})
+    vt2 = data2.get('virustotal', {})
+    
+    if vt1 or vt2:
+        vt_similarities, vt_enriched_similarities, vt_low_value_similarities, vt_differences = compare_vt_data(vt1, vt2, ioc1, ioc2)
+        similarities.extend(vt_similarities)
+        enriched_similarities.extend(vt_enriched_similarities)
+        low_value_similarities.extend(vt_low_value_similarities)
+        differences.extend(vt_differences)
 
     # Format comparison output
     output = f"Comparison between {ioc1} and {ioc2}:\n"
