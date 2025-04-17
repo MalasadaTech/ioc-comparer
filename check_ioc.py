@@ -9,6 +9,10 @@ try:
     from otx_client import OTXClient
 except ImportError:
     OTXClient = None
+try:
+    from vt_client import VTClient
+except ImportError:
+    VTClient = None
 
 def is_ip(ioc):
     """Determine if an IOC is an IP address."""
@@ -103,6 +107,80 @@ def format_single_ioc_output(ioc, data, output_dir):
                 output.append(f"  - OTX Threat Score: {rep['threat_score']}")
     else:
         output.append("\nAlienVault OTX Data: Not available")
+    
+    # Add VirusTotal information if available
+    vt_data = data.get("virustotal", {})
+    if vt_data:
+        output.append("\nVirusTotal Data:")
+        
+        # Add vendor statistics
+        if "vendor_stats" in vt_data:
+            stats = vt_data["vendor_stats"]
+            total = sum(stats.values())
+            malicious = stats.get("malicious", 0)
+            suspicious = stats.get("suspicious", 0)
+            output.append(f"- VT Vendor Score: {malicious + suspicious}/{total} ({malicious} malicious, {suspicious} suspicious)")
+        
+        # Add community score
+        if "community_score" in vt_data:
+            output.append(f"- VT Community Score: {vt_data['community_score']}")
+        
+        # Add tags
+        if "tags" in vt_data and vt_data["tags"]:
+            output.append(f"- VT Tags: {', '.join(vt_data['tags'])}")
+        
+        # Add categories if available
+        if "categories" in vt_data and vt_data["categories"]:
+            cat_strings = [f"{provider}: {category}" for provider, category in vt_data["categories"].items()]
+            output.append(f"- VT Categories: {', '.join(cat_strings[:5])}" + 
+                          (f" (+ {len(cat_strings) - 5} more)" if len(cat_strings) > 5 else ""))
+        
+        # Add registrar if available
+        if "registrar" in vt_data:
+            output.append(f"- VT Registrar: {vt_data['registrar']}")
+            
+        # Add JARM hash if available
+        if "jarm" in vt_data:
+            output.append(f"- VT JARM Hash: {vt_data['jarm']}")
+            
+        # Add DNS records if available
+        if "a_records" in vt_data or "aaaa_records" in vt_data or "ns_records" in vt_data:
+            output.append("- VT DNS Records:")
+            if "a_records" in vt_data:
+                output.append(f"  - A Records: {', '.join(vt_data['a_records'])}")
+            if "aaaa_records" in vt_data:
+                output.append(f"  - AAAA Records: {', '.join(vt_data['aaaa_records'])}")
+            if "ns_records" in vt_data:
+                output.append(f"  - NS Records: {', '.join(vt_data['ns_records'])}")
+        
+        # Add community votes if available
+        if "total_votes" in vt_data:
+            votes = vt_data["total_votes"]
+            harmless = votes.get("harmless", 0)
+            malicious = votes.get("malicious", 0)
+            output.append(f"- VT Community Votes: {malicious} malicious, {harmless} harmless")
+            
+        # Add popularity information if available
+        if "popularity_ranks" in vt_data and vt_data["popularity_ranks"]:
+            rank_strings = [f"{provider}: {details.get('rank', 'N/A')}" 
+                            for provider, details in vt_data["popularity_ranks"].items()]
+            output.append(f"- VT Popularity Ranks: {', '.join(rank_strings[:3])}" + 
+                          (f" (+ {len(rank_strings) - 3} more)" if len(rank_strings) > 3 else ""))
+        
+        # Add analysis dates
+        if "last_analysis_date" in vt_data:
+            last_date = datetime.fromtimestamp(vt_data["last_analysis_date"], tz=timezone.utc)
+            output.append(f"- VT Last Analysis: {last_date.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+            
+        if "creation_date" in vt_data:
+            creation_date = datetime.fromtimestamp(vt_data["creation_date"], tz=timezone.utc)
+            output.append(f"- VT Creation Date: {creation_date.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+            
+        if "first_submission_date" in vt_data:
+            first_date = datetime.fromtimestamp(vt_data["first_submission_date"], tz=timezone.utc)
+            output.append(f"- VT First Submission: {first_date.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    else:
+        output.append("\nVirusTotal Data: Not available")
 
     # Create formatted string
     formatted_output = "\n".join(output)
@@ -170,6 +248,14 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
             otx_client = OTXClient(config_path=config_path)
         except (FileNotFoundError, ValueError) as e:
             otx_client = None
+    
+    # Initialize the VirusTotal client
+    vt_client = None
+    if VTClient:
+        try:
+            vt_client = VTClient(config_path=config_path)
+        except (FileNotFoundError, ValueError) as e:
+            vt_client = None
 
     # Determine IOC type
     ioc_type = determine_ioc_type(ioc)
@@ -252,6 +338,15 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
             reputation = otx_client.get_reputation(ioc_type, ioc)
             if reputation:
                 otx_data["reputation"] = reputation
+    
+    # Get VirusTotal data when available
+    vt_data = {}
+    if vt_client and vt_client.api_key:
+        # Get indicator details
+        vt_details = vt_client.get_indicator_details(ioc_type, ioc)
+        if vt_details:
+            # Extract summary data
+            vt_data = vt_client.extract_vt_summary(vt_details)
 
     data = {
         "check_date": current_time.isoformat(),
@@ -263,6 +358,10 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
     # Add OTX data if it exists
     if otx_data:
         data["otx"] = otx_data
+    
+    # Add VirusTotal data if it exists
+    if vt_data:
+        data["virustotal"] = vt_data
 
     with open(json_file, "w") as f:
         json.dump(data, f, indent=4)

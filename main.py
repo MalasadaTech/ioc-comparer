@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # Compare IOCs if more than one
     if len(iocs) > 1:
-        print("Comparing IOCs...")
+        print("\n\nComparing IOCs...")
         substring = args.sstring
         compare_iocs(iocs, substring)
 

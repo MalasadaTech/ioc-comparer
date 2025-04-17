@@ -9,19 +9,21 @@
 - **RDAP Data**: Fetches domain registration details (status, creation/expiration dates, registrar, name servers) from RDAP servers.
 - **SSL Certificates**: Queries crt.sh for SSL certificate details (certificate ID, issuer, common name, validity dates).
 - **OTX Integration**: Automatically enriches IOCs with threat intelligence from AlienVault Open Threat Exchange (OTX).
+- **VirusTotal Integration**: Enriches IOCs with VirusTotal data including vendor score, community score, and tags.
 - **Comparison**: Analyzes the collected metadata, focusing on:
   - Shared IPs and ASNs.
   - RDAP status, registrar, name servers, and date proximity (within 7 days for creation/expiration).
   - SSL certificate issuing organization and `not_before` date proximity (within 7 days) for the first certificate of each domain.
   - OTX data including shared threat reports, reputation scores, and pulse information.
-- **Output**: Saves all data to a JSON file (`domains.json`) and prints a human-readable comparison of similarities and differences.
+  - VirusTotal data such as similar vendor and community scores, and matching tags.
+- **Output**: Saves all data to JSON files and prints a human-readable comparison of similarities and differences.
 
 ## Prerequisites
 
 - **Python**: Version 3.6 or higher.
 - **Dependencies**:
   - `dnspython`: For DNS resolution.
-  - `requests`: For HTTP requests to RDAP servers and crt.sh.
+  - `requests`: For HTTP requests to RDAP servers, crt.sh, and threat intelligence APIs.
 
 ## Installation
 
@@ -42,9 +44,11 @@
    pip install dnspython requests
    ```
 
-4. **Configure OTX API Key**:
+4. **Configure API Keys**:
    - Copy `config.ini.template` to `config.ini`
-   - Add your OTX API key to the config file under the [API_KEYS] section
+   - Add your API keys to the config file under the [API_KEYS] section:
+     - OTX API key (optional) - enables OTX threat intelligence enrichment
+     - VirusTotal API key (optional) - enables VirusTotal enrichment
 
 ## Usage
 
@@ -67,73 +71,57 @@ python main.py example.com example.org
 
 ### Output
 
-- **JSON File**: A file named `domains.json` is created in the current directory with detailed metadata for both domains.
+- **JSON Files**: JSON files are created in the output directory with detailed metadata for each domain.
+- **Analysis Files**: Text analysis files are created for both individual IOCs and comparisons.
 - **Console Output**: A comparison summary is printed, e.g.:
 
 ```
-Data saved to domains.json
-
 Similarities:
 - P0101.001 - Registration: Registrar: Example Registrar Inc.
 - P0101.002 - Registration: Registration date (7 days): 2022-01-15T00:00:00+00:00 and 2022-01-20T00:00:00+00:00
 - P0101.010 - Registration: Name Server: ns1.example.com
 - P0201 - IP: 93.184.216.34
 - P0203 - AS: 15133
+
+Enriched Similarities:
 - OTX Shared Threat Reports: Malicious Domain Campaign
+- VT Similar Malicious Ratings: 3.2% vs 4.1%
+- VT Shared Tags: phishing, malicious-activity
 
 Differences:
 - SSL cert not_before dates differ by more than 7 days: 2023-10-01T00:00:00+00:00 vs 2023-11-01T00:00:00+00:00
 ```
 
-### Sample `domains.json`
+## Threat Intelligence Integrations
 
-```json
-{
-    "example.com": {
-        "ips": [{"address": "93.184.216.34", "asn_number": "15133", "asn_name": "EDGECAST"}],
-        "rdap": {
-            "status": ["active"],
-            "creation_date": "2022-01-15T00:00:00Z",
-            "expiration_date": "2023-01-15T00:00:00Z",
-            "registrar": "Example Registrar Inc.",
-            "name_servers": ["ns1.example.com"]
-        },
-        "ssl_certs": [
-            {
-                "id": "123456789",
-                "issuer_name": "C=US, O=Let's Encrypt, CN=R10",
-                "common_name": "example.com",
-                "not_before": "2023-10-01T00:00:00",
-                "not_after": "2024-01-01T00:00:00"
-            }
-        ],
-        "otx": {
-            "pulse_count": 5,
-            "recent_pulses": ["Malicious Domain Campaign", "Phishing Infrastructure"],
-            "most_recent_pulse": "2025-01-15T00:00:00Z",
-            "reputation": {
-                "reputation": -2,
-                "threat_score": 3.5
-            }
-        }
-    },
-    "example.org": {...}
-}
-```
-
-## OTX Integration
+### OTX Integration
 
 The tool automatically enriches IOCs with threat intelligence from AlienVault OTX:
 
 1. Copy `config.ini.template` to `config.ini`
 2. Add your OTX API key to the config file under the [API_KEYS] section
-3. Run the tool normally - OTX enrichment happens automatically
+3. Run the tool normally - OTX enrichment happens automatically if a valid key is present
 
 The OTX integration provides:
 - General indicator details
 - Pulse (threat report) information
 - Reputation data for IPs and domains
 - Comparison of shared threat reports between IOCs
+
+### VirusTotal Integration
+
+VirusTotal enrichment provides additional context about the maliciousness of IOCs:
+
+1. Copy `config.ini.template` to `config.ini` if you haven't already
+2. Add your VirusTotal API key to the config file under the [API_KEYS] section
+3. Run the tool normally - VirusTotal enrichment happens automatically if a valid key is present
+
+The VirusTotal integration provides:
+- Vendor scanner statistics (malicious/suspicious/clean votes)
+- Community reputation score
+- Associated tags
+- First submission and last analysis dates
+- Comparison of all these data points between IOCs
 
 ## How It Works
 
@@ -143,7 +131,7 @@ The OTX integration provides:
 - Queries ASNs via Team Cymru's DNS TXT records.
 - Fetches RDAP data using the IANA bootstrap file and direct HTTP requests.
 - Retrieves SSL certificates from crt.sh.
-- Enriches IOCs with threat intelligence from OTX.
+- Enriches IOCs with threat intelligence from OTX and VirusTotal.
 
 ### Comparison
 
@@ -156,10 +144,16 @@ The OTX integration provides:
   - Shared threat reports (pulses)
   - Reputation and threat scores
   - Timing of most recent threat reports
+- For VirusTotal data, compares:
+  - Vendor assessment percentages
+  - Community reputation scores
+  - Shared tags
+  - First submission dates proximity
 
 ### Output
 
-- Saves all data to `domains.json`.
+- Saves all data to JSON files in the output directory.
+- Creates analysis text files for both individual IOCs and comparisons.
 - Prints similarities first, followed by differences.
 
 ## Notes
@@ -169,8 +163,9 @@ The OTX integration provides:
 
 ## Limitations
 
-- **Rate Limits**: External services (RDAP servers, crt.sh, OTX) may impose rate limits, potentially causing failures with excessive use.
-- **Data Availability**: Some domains may lack RDAP support, SSL certificates, or OTX data, resulting in partial analysis.
+- **Rate Limits**: External services (RDAP servers, crt.sh, OTX, VirusTotal) may impose rate limits, potentially causing failures with excessive use.
+- **Data Availability**: Some domains may lack RDAP support, SSL certificates, or threat intelligence data, resulting in partial analysis.
 - **Time Sensitivity**: Date comparisons depend on the current UTC time when the script runs.
-- **API Key Requirement**: OTX lookups require a valid API key from AlienVault.
+- **API Key Requirement**: OTX and VirusTotal lookups require valid API keys from their respective providers.
+- **VirusTotal Free API Limitations**: The free VirusTotal API has usage limits of 4 requests per minute and 500 requests per day.
 

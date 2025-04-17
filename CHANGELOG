@@ -32,4 +32,6 @@
 
 2025 APR 17:
 - Added AlienVault OTX integration for threat intelligence enrichment.
+- Added VirusTotal integration with the free API for additional IOC enrichment.
+
 
