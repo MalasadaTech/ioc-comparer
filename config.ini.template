@@ -1,3 +1,4 @@
 [API_KEYS]
 otx_api_key = your_otx_api_key_here
 vt_api_key = your_vt_api_key_here
+threatfox_api_key = your_threatfox_api_key_here

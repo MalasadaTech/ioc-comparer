@@ -228,6 +228,92 @@ def compare_vt_data(vt1, vt2, ioc1, ioc2):
     
     return similarities, enriched_similarities, low_value_similarities, differences
 
+def compare_threatfox_data(tf1, tf2, ioc1, ioc2):
+    """Compare ThreatFox data for two IOCs and return similarities and differences."""
+    similarities = []
+    enriched_similarities = []
+    low_value_similarities = []
+    differences = []
+    
+    # If neither has ThreatFox data, return early
+    if not tf1 and not tf2:
+        differences.append("No ThreatFox data available for either IOC")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    
+    # If only one has ThreatFox data
+    if not tf1:
+        differences.append(f"Only {ioc2} has ThreatFox data")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    if not tf2:
+        differences.append(f"Only {ioc1} has ThreatFox data")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    
+    # Compare threat types
+    threat_type1 = tf1.get('threat_type')
+    threat_type2 = tf2.get('threat_type')
+    
+    if threat_type1 and threat_type2 and threat_type1 == threat_type2:
+        enriched_similarities.append(f"Same ThreatFox threat type: {threat_type1}")
+    elif threat_type1 and threat_type2:
+        differences.append(f"ThreatFox threat types differ: {threat_type1} vs {threat_type2}")
+    
+    # Compare malware families
+    malware1 = tf1.get('malware')
+    malware2 = tf2.get('malware')
+    
+    if malware1 and malware2 and malware1 == malware2:
+        enriched_similarities.append(f"Same ThreatFox malware family: {malware1}")
+    elif malware1 and malware2:
+        differences.append(f"ThreatFox malware families differ: {malware1} vs {malware2}")
+    
+    # Compare malware aliases (could indicate related malware even if main family differs)
+    alias1 = tf1.get('malware_alias', '')
+    alias2 = tf2.get('malware_alias', '')
+    
+    if alias1 and alias2:
+        aliases1 = set(a.strip() for a in alias1.split(',') if a.strip())
+        aliases2 = set(a.strip() for a in alias2.split(',') if a.strip())
+        shared_aliases = aliases1 & aliases2
+        
+        if shared_aliases:
+            enriched_similarities.append(f"Shared ThreatFox malware aliases: {', '.join(shared_aliases)}")
+    
+    # Compare first seen dates
+    first_seen1 = parse_date(tf1.get('first_seen'))
+    first_seen2 = parse_date(tf2.get('first_seen'))
+    
+    if first_seen1 and first_seen2:
+        diff = abs(first_seen1 - first_seen2)
+        if diff <= timedelta(days=7):
+            enriched_similarities.append(f"ThreatFox first seen dates within 7 days: {first_seen1} and {first_seen2}")
+        else:
+            differences.append(f"ThreatFox first seen dates differ by more than 7 days: {first_seen1} vs {first_seen2}")
+    
+    # Compare confidence levels
+    conf1 = tf1.get('confidence_level')
+    conf2 = tf2.get('confidence_level')
+    
+    if conf1 is not None and conf2 is not None:
+        # Check if confidence levels are similar (within 20% or 10 points)
+        if abs(conf1 - conf2) <= max(10, min(conf1, conf2) * 0.2):
+            low_value_similarities.append(f"Similar ThreatFox confidence levels: {conf1} vs {conf2}")
+        else:
+            differences.append(f"ThreatFox confidence levels differ: {conf1} vs {conf2}")
+    
+    # Compare tags
+    tags1 = tf1.get('tags')
+    tags2 = tf2.get('tags')
+    
+    if tags1 and tags2:
+        tags1_set = set(tags1.split(',')) if isinstance(tags1, str) else set(tags1) if tags1 else set()
+        tags2_set = set(tags2.split(',')) if isinstance(tags2, str) else set(tags2) if tags2 else set()
+        shared_tags = tags1_set & tags2_set
+        
+        if shared_tags:
+            enriched_similarities.append(f"Shared ThreatFox tags: {', '.join(shared_tags)}")
+    
+    return similarities, enriched_similarities, low_value_similarities, differences
+
 def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
     """Compare two IOCs and return a formatted comparison string."""
     similarities = []
@@ -431,6 +517,17 @@ def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
         enriched_similarities.extend(vt_enriched_similarities)
         low_value_similarities.extend(vt_low_value_similarities)
         differences.extend(vt_differences)
+
+    # Compare ThreatFox data if available
+    tf1 = data1.get('threatfox', {})
+    tf2 = data2.get('threatfox', {})
+    
+    if tf1 or tf2:
+        tf_similarities, tf_enriched_similarities, tf_low_value_similarities, tf_differences = compare_threatfox_data(tf1, tf2, ioc1, ioc2)
+        similarities.extend(tf_similarities)
+        enriched_similarities.extend(tf_enriched_similarities)
+        low_value_similarities.extend(tf_low_value_similarities)
+        differences.extend(tf_differences)
 
     # Format comparison output
     output = f"Comparison between {ioc1} and {ioc2}:\n"
