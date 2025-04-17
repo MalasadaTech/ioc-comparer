@@ -60,9 +60,88 @@ def compare_ssl_certificates(cert1, cert2):
 
     return similarities, differences
 
+def compare_otx_data(otx1, otx2, ioc1, ioc2):
+    """Compare OTX data for two IOCs and return similarities and differences."""
+    similarities = []
+    enriched_similarities = []  # New category for OTX-specific similarities
+    low_value_similarities = []
+    differences = []
+    
+    # If neither has OTX data, return early
+    if not otx1 and not otx2:
+        differences.append("No OTX data available for either IOC")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    
+    # If only one has OTX data
+    if not otx1:
+        differences.append(f"Only {ioc2} has OTX data")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    if not otx2:
+        differences.append(f"Only {ioc1} has OTX data")
+        return similarities, enriched_similarities, low_value_similarities, differences
+    
+    # Compare pulse count (general popularity in threat reports)
+    pulse_count1 = otx1.get('pulse_count', 0)
+    pulse_count2 = otx2.get('pulse_count', 0)
+    
+    if pulse_count1 > 0 and pulse_count2 > 0:
+        if abs(pulse_count1 - pulse_count2) <= max(5, min(pulse_count1, pulse_count2) * 0.2):  # Within 20% or 5 pulses
+            enriched_similarities.append(f"Similar number of OTX threat reports: {pulse_count1} vs {pulse_count2}")
+        else:
+            differences.append(f"Significant difference in OTX threat report count: {ioc1}: {pulse_count1}, {ioc2}: {pulse_count2}")
+    
+    # Compare shared pulse names (if they're in the same threat reports)
+    recent_pulses1 = set(otx1.get('recent_pulses', []))
+    recent_pulses2 = set(otx2.get('recent_pulses', []))
+    shared_pulses = recent_pulses1 & recent_pulses2
+    
+    if shared_pulses:
+        enriched_similarities.append(f"OTX Shared Threat Reports: {', '.join(shared_pulses)}")
+    
+    # Compare most recent pulse dates
+    most_recent1 = parse_date(otx1.get('most_recent_pulse'))
+    most_recent2 = parse_date(otx2.get('most_recent_pulse'))
+    
+    if most_recent1 and most_recent2:
+        diff = abs(most_recent1 - most_recent2)
+        if diff <= timedelta(days=7):
+            enriched_similarities.append(f"OTX most recent threat reports within 7 days: {most_recent1} and {most_recent2}")
+        else:
+            differences.append(f"OTX most recent threat reports differ by more than 7 days: {most_recent1} vs {most_recent2}")
+    
+    # Compare reputation data if available
+    rep1 = otx1.get('reputation', {})
+    rep2 = otx2.get('reputation', {})
+    
+    if rep1 and rep2:
+        # Compare reputation scores
+        score1 = rep1.get('reputation')
+        score2 = rep2.get('reputation')
+        
+        if score1 is not None and score2 is not None:
+            # Check if both have similar reputations
+            if (score1 > 0 and score2 > 0) or (score1 < 0 and score2 < 0):
+                enriched_similarities.append(f"OTX Similar Reputation: Both IOCs have similar OTX reputation scores ({score1}, {score2})")
+            else:
+                differences.append(f"OTX reputation scores differ: {ioc1}: {score1}, {ioc2}: {score2}")
+        
+        # Compare threat scores
+        threat1 = rep1.get('threat_score')
+        threat2 = rep2.get('threat_score')
+        
+        if threat1 is not None and threat2 is not None:
+            # Check if both have similar threat scores (within 20%)
+            if abs(threat1 - threat2) <= max(1, min(threat1, threat2) * 0.2):
+                enriched_similarities.append(f"Similar OTX threat scores: {threat1} vs {threat2}")
+            else:
+                differences.append(f"OTX threat scores differ: {ioc1}: {threat1}, {ioc2}: {threat2}")
+    
+    return similarities, enriched_similarities, low_value_similarities, differences
+
 def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
     """Compare two IOCs and return a formatted comparison string."""
     similarities = []
+    enriched_similarities = []  # New section for OTX enrichment similarities
     low_value_similarities = []
     differences = []
 
@@ -241,9 +320,24 @@ def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
     similarities.extend(ssl_similarities)
     differences.extend(ssl_differences)
 
+    # Compare OTX data if available
+    otx1 = data1.get('otx', {})
+    otx2 = data2.get('otx', {})
+    
+    if otx1 or otx2:
+        otx_similarities, otx_enriched_similarities, otx_low_value_similarities, otx_differences = compare_otx_data(otx1, otx2, ioc1, ioc2)
+        similarities.extend(otx_similarities)
+        enriched_similarities.extend(otx_enriched_similarities)
+        low_value_similarities.extend(otx_low_value_similarities)
+        differences.extend(otx_differences)
+
     # Format comparison output
     output = f"Comparison between {ioc1} and {ioc2}:\n"
     output += "Similarities:\n" + "\n".join(f"- {sim}" for sim in similarities) + "\n" if similarities else "Similarities:\n- None\n"
+    
+    # Add the new Enriched Similarities section between Similarities and Low-value similarities
+    output += "\nEnriched Similarities:\n" + "\n".join(f"- {sim}" for sim in enriched_similarities) + "\n" if enriched_similarities else "\nEnriched Similarities:\n- None\n"
+    
     output += "\nLow-value similarities:\n" + "\n".join(f"- {low_sim}" for low_sim in low_value_similarities) + "\n" if low_value_similarities else "\nLow-value similarities:\n- None\n"
     output += "\nDifferences:\n" + "\n".join(f"- {diff}" for diff in differences) + "\n" if differences else "\nDifferences:\n- None\n"
     output += "\n"
