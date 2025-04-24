@@ -487,9 +487,20 @@ def compare_two_iocs(ioc1, ioc2, data1, data2, substring=None):
     else:
         differences.append(f"No shared ASN Countries. {ioc1} has ASN Countries {', '.join(asn_countries1) if asn_countries1 else 'none'}, {ioc2} has ASN Countries {', '.join(asn_countries2) if asn_countries2 else 'none'}")
 
-    # Ensure the SSL certificate list is not empty before accessing the first element
-    cert1 = data1.get('ssl_certs', [None])[0] if data1.get('ssl_certs') else None
-    cert2 = data2.get('ssl_certs', [None])[0] if data2.get('ssl_certs') else None
+    # Fixed SSL certificate handling - properly check for existence of SSL certificates data
+    # and handle cases where crt.sh lookup fails
+    ssl_certs1 = data1.get('ssl_certs')
+    ssl_certs2 = data2.get('ssl_certs')
+    
+    # Only try to access the first certificate if the ssl_certs is a non-empty list
+    cert1 = None
+    cert2 = None
+    
+    if ssl_certs1 and isinstance(ssl_certs1, list) and len(ssl_certs1) > 0:
+        cert1 = ssl_certs1[0]
+    
+    if ssl_certs2 and isinstance(ssl_certs2, list) and len(ssl_certs2) > 0:
+        cert2 = ssl_certs2[0]
 
     # Compare SSL certificates
     ssl_similarities, ssl_differences = compare_ssl_certificates(cert1, cert2)
