@@ -35,4 +35,9 @@
 - Added VirusTotal integration with the free API for additional IOC enrichment.
 - Added ThreatFox integration for additional threat intelligence about malware families and threat types.
 
+2025 MAY 09:
+- Added IPinfo.io Lite API integration for IP to ASN lookups.
+- Added configuration support for IPinfo.io API key.
+- Implemented fallback to Team Cymru DNS-based ASN lookup if IPinfo.io lookup fails or no API key is provided.
+
 
