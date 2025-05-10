@@ -10,7 +10,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process and compare IOCs.")
     parser.add_argument("iocs", nargs="*", help="List of IOCs or a file containing IOCs.")
     parser.add_argument("--sstring", type=str, help="Substring to search for in domain names.")
-    parser.add_argument("--config", type=str, default="config.ini", help="Path to configuration file with API keys.")
+    parser.add_argument("--config", type=str, default=".env", help="Path to environment file with API keys.")
     args = parser.parse_args()
 
     # Parse IOCs from file or command line

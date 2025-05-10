@@ -1,43 +1,41 @@
 import requests
-import configparser
 import os
 import logging
 from typing import Dict, Any, Optional, List
+from dotenv import load_dotenv
 
 class VTClient:
     """Client for VirusTotal API."""
     
     BASE_URL = "https://www.virustotal.com/api/v3"
     
-    def __init__(self, config_path: str = "config.ini"):
-        """Initialize VirusTotal client with API key from config."""
+    def __init__(self, env_path: str = ".env"):
+        """Initialize VirusTotal client with API key from environment variables."""
         # Initialize logger first before using it
         self.logger = logging.getLogger(__name__)
-        self.api_key = self._load_api_key(config_path)
+        self.api_key = self._load_api_key(env_path)
         self.headers = {
             'x-apikey': self.api_key,
             'User-Agent': 'IOC-Comparer',
             'Accept': 'application/json'
         }
     
-    def _load_api_key(self, config_path: str) -> str:
-        """Load API key from config file."""
-        if not os.path.exists(config_path):
-            self.logger.warning(f"Config file not found: {config_path}. Enrichment will be skipped.")
+    def _load_api_key(self, env_path: str) -> str:
+        """Load API key from environment variables."""
+        # Load environment variables from .env file if it exists
+        if os.path.exists(env_path):
+            load_dotenv(env_path)
+        
+        api_key = os.getenv("VT_API_KEY")
+        if not api_key:
+            self.logger.warning("VT_API_KEY environment variable not found. VirusTotal enrichment will be skipped.")
             return ""
         
-        config = configparser.ConfigParser()
-        config.read(config_path)
-        
-        try:
-            api_key = config.get('API_KEYS', 'vt_api_key')
-            if not api_key or api_key == "your_vt_api_key_here":
-                self.logger.warning("No valid VirusTotal API key found. VirusTotal enrichment will be skipped.")
-                return ""
-            return api_key
-        except (configparser.NoSectionError, configparser.NoOptionError) as e:
-            self.logger.warning(f"Invalid config file format or missing VT API key: {e}")
+        if api_key == "your_vt_api_key_here":
+            self.logger.warning("No valid VirusTotal API key found. VirusTotal enrichment will be skipped.")
             return ""
+            
+        return api_key
     
     def get_indicator_details(self, ioc_type: str, ioc_value: str) -> Optional[Dict[str, Any]]:
         """Get details for an indicator from VirusTotal.

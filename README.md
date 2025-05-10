@@ -25,6 +25,7 @@
 - **Dependencies**:
   - `dnspython`: For DNS resolution.
   - `requests`: For HTTP requests to RDAP servers, crt.sh, and threat intelligence APIs.
+  - `python-dotenv`: For loading environment variables from .env files.
 
 ## Installation
 
@@ -42,16 +43,16 @@
 
 3. **Install Required Packages**:
    ```bash
-   pip install dnspython requests
+   pip install dnspython requests python-dotenv
    ```
 
 4. **Configure API Keys**:
-   - Copy `config.ini.template` to `config.ini`
-   - Add your API keys to the config file under the [API_KEYS] section:
-     - OTX API key (optional) - enables OTX threat intelligence enrichment
-     - VirusTotal API key (optional) - enables VirusTotal enrichment
-     - ThreatFox API key (optional) - enables ThreatFox malware intelligence enrichment
-     - IPinfo API key (optional) - enables IPinfo's Lite API for ASN lookups
+   - Copy `.env.template` to `.env`
+   - Add your API keys to the .env file:
+     - OTX_API_KEY (optional) - enables OTX threat intelligence enrichment
+     - VT_API_KEY (optional) - enables VirusTotal enrichment
+     - THREATFOX_API_KEY (optional) - enables ThreatFox malware intelligence enrichment
+     - IPINFO_API_KEY (optional) - enables IPinfo's Lite API for ASN lookups
 
 ## Usage
 
@@ -64,7 +65,7 @@ python main.py domain1 domain2
 ### Options
 
 - `--sstring`: Specify a substring to search for in domain names.
-- `--config`: Specify a path to configuration file with API keys (default: config.ini).
+- `--config`: Specify a path to configuration file with API keys (default: .env).
 
 ### Example
 
@@ -101,8 +102,8 @@ Differences:
 
 The tool can use IPinfo.io's Lite API service to retrieve ASN information for IP addresses:
 
-1. Copy `config.ini.template` to `config.ini` if you haven't already
-2. Add your IPinfo.io API key to the config file under the [API_KEYS] section
+1. Copy `.env.template` to `.env` if you haven't already
+2. Add your IPinfo.io API key to the .env file
 3. Run the tool normally - IPinfo enrichment happens automatically if a valid key is present
 
 If IPinfo.io lookup fails or no API key is provided, the tool automatically falls back to Team Cymru's DNS-based ASN lookup.
@@ -111,8 +112,8 @@ If IPinfo.io lookup fails or no API key is provided, the tool automatically fall
 
 The tool automatically enriches IOCs with threat intelligence from AlienVault OTX:
 
-1. Copy `config.ini.template` to `config.ini`
-2. Add your OTX API key to the config file under the [API_KEYS] section
+1. Copy `.env.template` to `.env`
+2. Add your OTX API key to the .env file
 3. Run the tool normally - OTX enrichment happens automatically if a valid key is present
 
 The OTX integration provides:
@@ -125,8 +126,8 @@ The OTX integration provides:
 
 VirusTotal enrichment provides additional context about the maliciousness of IOCs:
 
-1. Copy `config.ini.template` to `config.ini` if you haven't already
-2. Add your VirusTotal API key to the config file under the [API_KEYS] section
+1. Copy `.env.template` to `.env` if you haven't already
+2. Add your VirusTotal API key to the .env file
 3. Run the tool normally - VirusTotal enrichment happens automatically if a valid key is present
 
 The VirusTotal integration provides:
@@ -140,8 +141,8 @@ The VirusTotal integration provides:
 
 ThreatFox enrichment provides additional threat intelligence about malware and IOCs:
 
-1. Copy `config.ini.template` to `config.ini` if you haven't already
-2. Add your ThreatFox API key to the config file under the [API_KEYS] section
+1. Copy `.env.template` to `.env` if you haven't already
+2. Add your ThreatFox API key to the .env file
 3. Run the tool normally - ThreatFox enrichment happens automatically if a valid key is present
 
 The ThreatFox integration provides:
