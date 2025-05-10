@@ -5,7 +5,7 @@
 ## Features
 
 - **IP Resolution**: Retrieves IPv4 and IPv6 addresses for each domain using DNS lookups.
-- **ASN Lookup**: Identifies the ASN number and name for each IP address via Team Cymru's DNS service.
+- **ASN Lookup**: Identifies the ASN number and name for each IP address via IPinfo.io's Lite API (if configured) or Team Cymru's DNS service.
 - **RDAP Data**: Fetches domain registration details (status, creation/expiration dates, registrar, name servers) from RDAP servers.
 - **SSL Certificates**: Queries crt.sh for SSL certificate details (certificate ID, issuer, common name, validity dates).
 - **OTX Integration**: Automatically enriches IOCs with threat intelligence from AlienVault Open Threat Exchange (OTX).
@@ -51,6 +51,7 @@
      - OTX API key (optional) - enables OTX threat intelligence enrichment
      - VirusTotal API key (optional) - enables VirusTotal enrichment
      - ThreatFox API key (optional) - enables ThreatFox malware intelligence enrichment
+     - IPinfo API key (optional) - enables IPinfo's Lite API for ASN lookups
 
 ## Usage
 
@@ -95,6 +96,16 @@ Differences:
 ```
 
 ## Threat Intelligence Integrations
+
+### IPinfo.io Integration
+
+The tool can use IPinfo.io's Lite API service to retrieve ASN information for IP addresses:
+
+1. Copy `config.ini.template` to `config.ini` if you haven't already
+2. Add your IPinfo.io API key to the config file under the [API_KEYS] section
+3. Run the tool normally - IPinfo enrichment happens automatically if a valid key is present
+
+If IPinfo.io lookup fails or no API key is provided, the tool automatically falls back to Team Cymru's DNS-based ASN lookup.
 
 ### OTX Integration
 
@@ -145,7 +156,7 @@ The ThreatFox integration provides:
 ### Data Collection
 
 - Resolves domain IPs using `dns.resolver`.
-- Queries ASNs via Team Cymru's DNS TXT records.
+- Queries ASNs via IPinfo.io's Lite API (if configured) or Team Cymru's DNS TXT records as a fallback.
 - Fetches RDAP data using the IANA bootstrap file and direct HTTP requests.
 - Retrieves SSL certificates from crt.sh.
 - Enriches IOCs with threat intelligence from OTX, VirusTotal, and ThreatFox.
@@ -185,9 +196,9 @@ The ThreatFox integration provides:
 
 ## Limitations
 
-- **Rate Limits**: External services (RDAP servers, crt.sh, OTX, VirusTotal) may impose rate limits, potentially causing failures with excessive use.
+- **Rate Limits**: External services (RDAP servers, crt.sh, OTX, VirusTotal, IPinfo.io) may impose rate limits, potentially causing failures with excessive use.
 - **Data Availability**: Some domains may lack RDAP support, SSL certificates, or threat intelligence data, resulting in partial analysis.
 - **Time Sensitivity**: Date comparisons depend on the current UTC time when the script runs.
-- **API Key Requirement**: OTX and VirusTotal lookups require valid API keys from their respective providers.
+- **API Key Requirement**: OTX, VirusTotal, ThreatFox, and IPinfo.io lookups require valid API keys from their respective providers.
 - **VirusTotal Free API Limitations**: The free VirusTotal API has usage limits of 4 requests per minute and 500 requests per day.
 

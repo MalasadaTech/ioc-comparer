@@ -9,6 +9,11 @@ from datetime import datetime, timezone
 import time
 import hashlib  # Add this import for MD5 hash calculation
 
+try:
+    from ipinfo_client import IPinfoClient
+except ImportError:
+    IPinfoClient = None
+
 def get_ptr_record(ip):
     """Perform a reverse DNS lookup for an IP address."""
     try:
@@ -57,8 +62,8 @@ def reverse_ip(ip):
         zone = 'origin.asn.cymru.com'
     return reversed_ip + '.' + zone
 
-def get_asn(ip):
-    """Get ASN number, name, and country for an IP."""
+def get_asn_from_cymru(ip):
+    """Get ASN information from Team Cymru DNS service."""
     query_name = reverse_ip(ip)
     try:
         answers = dns.resolver.resolve(query_name, 'TXT')
@@ -73,10 +78,26 @@ def get_asn(ip):
         # Remove trailing ", {asn_country}" from asn_name if it exists
         if asn_name.endswith(f", {asn_country}"):
             asn_name = asn_name[: -len(f", {asn_country}")]
-        return asn_number, asn_name, asn_country
+        return asn_number, asn_name, asn_country, "Team Cymru"
     except Exception as e:
-        print(f"Error retrieving ASN for {ip}: {e}")
-        return None, None, None
+        print(f"Error retrieving ASN from Team Cymru for {ip}: {e}")
+        return None, None, None, None
+
+def get_asn(ip, config_path="config.ini"):
+    """Get ASN number, name, and country for an IP."""
+    # Try IPinfo.io first if available
+    if IPinfoClient:
+        try:
+            ipinfo_client = IPinfoClient(config_path)
+            if ipinfo_client.api_key:  # Only proceed if we have an API key
+                asn_number, asn_name, asn_country = ipinfo_client.get_asn_info(ip)
+                if asn_number:
+                    return asn_number, asn_name, asn_country, "IPinfo"
+        except Exception as e:
+            print(f"Error retrieving ASN from IPinfo for {ip}: {e}")
+    
+    # Fall back to Cymru lookup
+    return get_asn_from_cymru(ip)
 
 def get_rdap_bootstrap():
     """Fetch RDAP bootstrap data."""

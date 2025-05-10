@@ -17,6 +17,10 @@ try:
     from threatfox_client import ThreatFoxClient
 except ImportError:
     ThreatFoxClient = None
+try:
+    from ipinfo_client import IPinfoClient
+except ImportError:
+    IPinfoClient = None
 
 def is_ip(ioc):
     """Determine if an IOC is an IP address."""
@@ -55,7 +59,8 @@ def format_single_ioc_output(ioc, data, output_dir):
             if ip.get("hostname"):
                 output.append(f"  Hostname: {ip['hostname']}")
             if ip.get("asn_number"):
-                output.append(f"  ASN: {ip['asn_number']} ({ip.get('asn_name', 'Unknown')}, {ip.get('asn_country', 'Unknown')})")
+                asn_source = ip.get('asn_source', 'Unknown Source')
+                output.append(f"  ASN: {ip['asn_number']} ({ip.get('asn_name', 'Unknown')}, {ip.get('asn_country', 'Unknown')}) [Source: {asn_source}]")
     else:
         output.append("- No IPs found.")
 
@@ -336,10 +341,10 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
     ip_data = get_ips(ioc)
     ip_list = []
     
-    # Update the ASN extraction to include both asn_name and asn_country
+    # Update the ASN extraction to include both asn_name, asn_country, and asn_source
     for ip_entry in ip_data:
         ip_address = ip_entry["ip"]
-        asn_number, asn_name, asn_country = get_asn(ip_address)
+        asn_number, asn_name, asn_country, asn_source = get_asn(ip_address, config_path)
         ip_dict = {
             "address": ip_address,
             "type": ip_entry["type"],
@@ -349,6 +354,7 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
             ip_dict["asn_number"] = asn_number
             ip_dict["asn_name"] = asn_name
             ip_dict["asn_country"] = asn_country
+            ip_dict["asn_source"] = asn_source
         ip_list.append(ip_dict)
 
     rdap_data = get_rdap_data(ioc, tld_to_rdap)
