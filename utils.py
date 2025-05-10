@@ -83,12 +83,12 @@ def get_asn_from_cymru(ip):
         print(f"Error retrieving ASN from Team Cymru for {ip}: {e}")
         return None, None, None, None
 
-def get_asn(ip, config_path="config.ini"):
+def get_asn(ip, config_path=".env"):
     """Get ASN number, name, and country for an IP."""
     # Try IPinfo.io first if available
     if IPinfoClient:
         try:
-            ipinfo_client = IPinfoClient(config_path)
+            ipinfo_client = IPinfoClient(env_path=config_path)
             if ipinfo_client.api_key:  # Only proceed if we have an API key
                 asn_number, asn_name, asn_country = ipinfo_client.get_asn_info(ip)
                 if asn_number:

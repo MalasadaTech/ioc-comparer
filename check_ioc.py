@@ -284,7 +284,7 @@ def determine_ioc_type(ioc):
         # Default to unknown
         return 'unknown'
 
-def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
+def check_ioc(ioc, tld_to_rdap, config_path=".env"):
     """Check a single IOC and save its metadata to a JSON file."""
     output_dir = "output"
     if not os.path.exists(output_dir):
@@ -308,7 +308,7 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
     otx_client = None
     if OTXClient:
         try:
-            otx_client = OTXClient(config_path=config_path)
+            otx_client = OTXClient(env_path=config_path)
         except (FileNotFoundError, ValueError) as e:
             otx_client = None
     
@@ -316,7 +316,7 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
     vt_client = None
     if VTClient:
         try:
-            vt_client = VTClient(config_path=config_path)
+            vt_client = VTClient(env_path=config_path)
         except (FileNotFoundError, ValueError) as e:
             vt_client = None
 
@@ -324,7 +324,7 @@ def check_ioc(ioc, tld_to_rdap, config_path="config.ini"):
     threatfox_client = None
     if ThreatFoxClient:
         try:
-            threatfox_client = ThreatFoxClient(config_path=config_path)
+            threatfox_client = ThreatFoxClient(env_path=config_path)
         except (FileNotFoundError, ValueError) as e:
             threatfox_client = None
 

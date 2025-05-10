@@ -39,5 +39,8 @@
 - Added IPinfo.io Lite API integration for IP to ASN lookups.
 - Added configuration support for IPinfo.io API key.
 - Implemented fallback to Team Cymru DNS-based ASN lookup if IPinfo.io lookup fails or no API key is provided.
+- Migrated from config.ini to .env file format for storing API keys.
+- Updated all client modules to use python-dotenv for loading environment variables.
+- Renamed config.ini.template to .env.template to match the new environment variable approach.
 
 

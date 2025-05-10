@@ -1,17 +1,17 @@
 import requests
-import configparser
 import os
 import logging
 from typing import Dict, Any, Optional, List
+from dotenv import load_dotenv
 
 class OTXClient:
     """Client for AlienVault OTX API."""
     
     BASE_URL = "https://otx.alienvault.com/api/v1"
     
-    def __init__(self, config_path: str = "config.ini"):
-        """Initialize OTX client with API key from config."""
-        self.api_key = self._load_api_key(config_path)
+    def __init__(self, env_path: str = ".env"):
+        """Initialize OTX client with API key from environment variables."""
+        self.api_key = self._load_api_key(env_path)
         self.headers = {
             'X-OTX-API-KEY': self.api_key,
             'User-Agent': 'IOC-Comparer',
@@ -19,21 +19,20 @@ class OTXClient:
         }
         self.logger = logging.getLogger(__name__)
     
-    def _load_api_key(self, config_path: str) -> str:
-        """Load API key from config file."""
-        if not os.path.exists(config_path):
-            raise FileNotFoundError(f"Config file not found: {config_path}. Please copy config.ini.template to config.ini and add your API key.")
+    def _load_api_key(self, env_path: str) -> str:
+        """Load API key from environment variables."""
+        # Load environment variables from .env file if it exists
+        if os.path.exists(env_path):
+            load_dotenv(env_path)
         
-        config = configparser.ConfigParser()
-        config.read(config_path)
+        api_key = os.getenv("OTX_API_KEY")
+        if not api_key:
+            raise ValueError("OTX_API_KEY environment variable not found. Please make sure it's defined in your .env file.")
         
-        try:
-            api_key = config.get('API_KEYS', 'otx_api_key')
-            if api_key == "your_otx_api_key_here":
-                raise ValueError("Please update config.ini with your actual OTX API key")
-            return api_key
-        except (configparser.NoSectionError, configparser.NoOptionError) as e:
-            raise ValueError(f"Invalid config file format: {e}")
+        if api_key == "your_otx_api_key_here":
+            raise ValueError("Please update your .env file with your actual OTX API key")
+        
+        return api_key
     
     def get_indicator_details(self, ioc_type: str, ioc_value: str) -> Optional[Dict[str, Any]]:
         """Get details for an indicator from OTX.
